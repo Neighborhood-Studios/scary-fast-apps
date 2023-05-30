@@ -1,0 +1,13 @@
+*venv*
+*.sqlite3
+.idea/
+*.pyc
+.env
+*.log
+
+build/
+dist/
+
+*.egg-info/
+*.DS_Store
+.vscode/
