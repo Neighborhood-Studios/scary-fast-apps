@@ -1,9 +1,10 @@
 import type { FC, PropsWithChildren } from 'react';
+
 import { useEffect, useMemo, useState } from 'react';
 //
 import { ApolloClient, ApolloProvider, InMemoryCache } from '@apollo/client';
-
 import { useAuth0 } from '@auth0/auth0-react';
+
 import { splitLink } from './utils.ts';
 
 const createApolloClient = (
@@ -15,7 +16,19 @@ const createApolloClient = (
     cache: new InMemoryCache(),
   });
 
-export const ApolloClientProvider: FC<PropsWithChildren> = ({ children }) => {
+export const ApolloClientProvider: FC<
+  PropsWithChildren<{ hasAuth: boolean }>
+> = ({ hasAuth, children }) => {
+  return hasAuth ? (
+    <ApolloClientWithAuthProvider>{children}</ApolloClientWithAuthProvider>
+  ) : (
+    <ApolloClientNoAuthProvider>{children}</ApolloClientNoAuthProvider>
+  );
+};
+
+const ApolloClientWithAuthProvider: FC<PropsWithChildren> = ({
+  children,
+}) => {
   const [authToken, setAuthToken] = useState<string>('');
   const { getAccessTokenSilently } = useAuth0();
   const client = useMemo(
@@ -36,7 +49,8 @@ export const ApolloClientProvider: FC<PropsWithChildren> = ({ children }) => {
 
   return <ApolloProvider client={client}>{children}</ApolloProvider>;
 };
-export const ApolloClientNoAuthProvider: FC<PropsWithChildren> = ({
+
+const ApolloClientNoAuthProvider: FC<PropsWithChildren> = ({
   children,
 }) => {
   const client = useMemo(() => createApolloClient(), []);

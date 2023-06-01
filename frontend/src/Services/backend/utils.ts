@@ -4,6 +4,7 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import { setContext } from '@apollo/client/link/context';
 
+//https://www.apollographql.com/docs/react/networking/authentication
 export function splitLink(token?: string, getToken?: () => Promise<string>) {
   return split(
     ({ query }) => {

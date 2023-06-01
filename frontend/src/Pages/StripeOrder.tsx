@@ -9,7 +9,6 @@ import { Successful } from 'Components/order/Successful.tsx';
 export enum paymentRoutes {
   PAYMENT = 'payment',
   SUCCESS = 'payment-successful',
-  CONFIRM = 'confirm',
 }
 
 export const routes: RouteObject[] = [
@@ -28,7 +27,7 @@ export const routes: RouteObject[] = [
   },
 ];
 
-export const Order: FC = () => {
+export const StripeOrder: FC = () => {
   // const location = useHref(paymentRoutes.RESULT);
   const navigate = useNavigate();
 

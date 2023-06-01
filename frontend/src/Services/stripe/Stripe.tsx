@@ -1,12 +1,12 @@
 import type { FC } from 'react';
 import type { StripeElementsOptions } from '@stripe/stripe-js';
 
+import { useEffect, useState } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 
 import { apiKey } from './stripe-config.ts';
 import CheckoutForm from './CheckoutForm.tsx';
-import { useEffect, useState } from 'react';
 
 // Make sure to call `loadStripe` outside of a component’s render to avoid
 // recreating the `Stripe` object on every render.
@@ -20,10 +20,10 @@ export const Stripe: FC<{
 
   const params = new URLSearchParams(location.search);
   // const paymentIntentId = params.get('payment_intent');
-  const paymentIntentSecret = params.get('payment_intent_client_secret');
-  const paymentIntentStatus = params.get('redirect_status');
+  const redirect_paymentIntentSecret = params.get('payment_intent_client_secret');
+  const redirect_paymentIntentStatus = params.get('redirect_status');
 
-  const [paymentStatus, setPaymentStatus] = useState(paymentIntentStatus);
+  const [paymentStatus, setPaymentStatus] = useState(redirect_paymentIntentStatus);
 
   useEffect(() => {
     switch (paymentStatus) {
@@ -38,15 +38,15 @@ export const Stripe: FC<{
         setMessage('Your payment is processing.');
         break;
       case 'requires_payment_method':
-        setMessage('Your payment was not successful, please try again.');
+        if(redirect_paymentIntentStatus) setMessage('Your payment was not successful, please try again.');
         break;
       default:
         setMessage('Something went wrong.');
         break;
     }
-  }, [paymentStatus, onSuccess]);
+  }, [redirect_paymentIntentStatus, paymentStatus, onSuccess]);
 
-  const clientSecret = paymentIntentSecretKey || paymentIntentSecret || '';
+  const clientSecret = paymentIntentSecretKey || redirect_paymentIntentSecret || '';
   useEffect(() => {
     if (clientSecret) {
       stripePromise
@@ -64,7 +64,7 @@ export const Stripe: FC<{
 
   const options: StripeElementsOptions = {
     // passing the client secret obtained from the server
-    clientSecret: paymentIntentSecretKey || paymentIntentSecret || '',
+    clientSecret: paymentIntentSecretKey || redirect_paymentIntentSecret || '',
     appearance: {
       theme: 'stripe',
     },

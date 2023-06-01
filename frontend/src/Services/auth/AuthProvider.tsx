@@ -7,7 +7,7 @@ import { Auth0Provider } from '@auth0/auth0-react';
 export const hasAuth = !!AUTH_CONFIG.clientId;
 
 export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
-  return (
+  return hasAuth ? (
     <Auth0Provider
       clientId={AUTH_CONFIG.clientId}
       domain={AUTH_CONFIG.domain}
@@ -19,5 +19,5 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     >
       {children}
     </Auth0Provider>
-  );
+  ) : <>{children}</>;
 };

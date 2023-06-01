@@ -1,20 +1,20 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { App } from 'App.tsx';
-import { Order, routes as orderRoutes } from 'Pages/Order.tsx';
+import { StripeOrder, routes as orderRoutes } from 'Pages/StripeOrder.tsx';
 import { Home } from 'Pages/Home.tsx';
 
 export const baseURL = new URL(import.meta.env.BASE_URL, window.origin);
 export const getAbsoluteUrl = (route: string) => new URL(route, baseURL.href);
 
 export enum ROUTES {
-  INDEX = '/',
-  ORDER = '/order',
+  ROOT = '/',
+  STRIPE = '/stripe',
 }
 
 export const router = createBrowserRouter(
   [
     {
-      path: ROUTES.INDEX,
+      path: ROUTES.ROOT,
       element: <App />,
       children: [
         {
@@ -22,8 +22,8 @@ export const router = createBrowserRouter(
           element: <Home />,
         },
         {
-          path: ROUTES.ORDER,
-          element: <Order />,
+          path: ROUTES.STRIPE,
+          element: <StripeOrder />,
           children: orderRoutes,
         },
       ],
