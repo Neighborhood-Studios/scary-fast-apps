@@ -14,6 +14,8 @@ interface ImportMetaEnv {
 
   readonly VITE_APP_STRIPE_PUBLISHABLE_KEY: string;
   readonly VITE_APP_STRIPE_BE_URL: string;
+
+  readonly VITE_APP_PLAID_BE_URL: string;
 }
 
 interface ImportMeta {

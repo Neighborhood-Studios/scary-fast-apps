@@ -4,13 +4,15 @@ import viteTsConfigPaths from 'vite-tsconfig-paths';
 import macrosPlugin from 'vite-plugin-babel-macros';
 import svgr from 'vite-plugin-svgr';
 import { getPaymentIntent } from './dev/stripe';
+import { plaidBESimulator } from './dev/plaid';
 
 const env = loadEnv('development', process.cwd(), '');
 
+const PORT = 4200;
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
-    port: 4200,
+    port: PORT,
     host: '0.0.0.0',
     proxy: {
       // '/api': {
@@ -28,15 +30,15 @@ export default defineConfig({
       //   },
       // },
       [env.VITE_APP_STRIPE_BE_URL]: {
-        target: 'http://0.0.0.0:4200/',
+        target: `http://0.0.0.0:${PORT}/`,
         selfHandleResponse: true,
-        rewrite: (path) => path.replace(/^\/stripe/, ''),
-        configure: (proxy, options) => {
+        rewrite: (path) => path.replace(env.VITE_APP_STRIPE_BE_URL, ''),
+        configure: (proxy/*, options*/) => {
           let requestBody: {
             amount: number;
             currency: string;
           };
-          proxy.on('proxyReq', (proxyReq, req, res) => {
+          proxy.on('proxyReq', (proxyReq, req/*, res*/) => {
             requestBody = JSON.parse(req.read());
           });
           proxy.on('proxyRes', (proxyRes, req, res) => {
@@ -44,6 +46,27 @@ export default defineConfig({
               amount: requestBody.amount,
               currency: requestBody.currency,
             })
+              .then(JSON.stringify)
+              .then(res.end.bind(res));
+          });
+        },
+      },
+      [env.VITE_APP_PLAID_BE_URL]: {
+        target: `http://0.0.0.0:${PORT}/`,
+        selfHandleResponse: true,
+        rewrite: (path) => path.replace(env.VITE_APP_PLAID_BE_URL, ''),
+        configure: (proxy/*, options*/) => {
+          let requestBody;
+          let requestUrl;
+          proxy.on('proxyReq', (proxyReq, req/*, res*/) => {
+            requestBody = JSON.parse(req.read());
+            requestUrl = req.url;
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            plaidBESimulator(
+              requestUrl.replace(env.VITE_APP_PLAID_BE_URL, ''),
+              requestBody
+            )
               .then(JSON.stringify)
               .then(res.end.bind(res));
           });
