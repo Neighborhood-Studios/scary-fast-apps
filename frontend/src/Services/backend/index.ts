@@ -1,3 +1,1 @@
-export {
-  ApolloClientProvider,
-} from './ApolloClientProvider.tsx';
+export { ApolloClientProvider } from './ApolloClientProvider.tsx';
