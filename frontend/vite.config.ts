@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, ProxyOptions } from 'vite';
 import react from '@vitejs/plugin-react';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 import macrosPlugin from 'vite-plugin-babel-macros';
@@ -11,81 +11,80 @@ const env = loadEnv('development', process.cwd(), '');
 const PORT = 4200;
 // https://vitejs.dev/config/
 export default defineConfig({
-  server: {
-    port: PORT,
-    host: '0.0.0.0',
-    proxy: {
-      // '/api': {
-      //   target: 'http://jsonplaceholder.typicode.com',
-      //   changeOrigin: true,
-      //   rewrite: (path) => path.replace(/^\/api/, ''),
-      //   configure: (proxy, options) => {
-      //     proxy.on('proxyReq', (proxyReq, req, _res) => {
-      //       console.log(
-      //         '[api]: Sending Request to the Target:',
-      //         req.method,
-      //         req.url
-      //       );
-      //     });
-      //   },
-      // },
-      [env.VITE_APP_STRIPE_BE_URL]: {
-        target: `http://0.0.0.0:${PORT}/`,
-        selfHandleResponse: true,
-        rewrite: (path) => path.replace(env.VITE_APP_STRIPE_BE_URL, ''),
-        configure: (proxy/*, options*/) => {
-          let requestBody: {
-            amount: number;
-            currency: string;
-          };
-          proxy.on('proxyReq', (proxyReq, req/*, res*/) => {
-            requestBody = JSON.parse(req.read());
-          });
-          proxy.on('proxyRes', (proxyRes, req, res) => {
-            getPaymentIntent({
-              amount: requestBody.amount,
-              currency: requestBody.currency,
-            })
-              .then(JSON.stringify)
-              .then(res.end.bind(res));
-          });
+    server: {
+        port: PORT,
+        host: '0.0.0.0',
+        proxy: {
+            ...proxyApiHandler(
+                env.VITE_APP_STRIPE_BE_URL,
+                PORT,
+                (_, requestData) => getPaymentIntent(requestData)
+            ),
+            ...proxyApiHandler(
+                env.VITE_APP_PLAID_BE_URL,
+                PORT,
+                plaidBESimulator
+            ),
         },
-      },
-      [env.VITE_APP_PLAID_BE_URL]: {
-        target: `http://0.0.0.0:${PORT}/`,
-        selfHandleResponse: true,
-        rewrite: (path) => path.replace(env.VITE_APP_PLAID_BE_URL, ''),
-        configure: (proxy/*, options*/) => {
-          let requestBody;
-          let requestUrl;
-          proxy.on('proxyReq', (proxyReq, req/*, res*/) => {
-            requestBody = JSON.parse(req.read());
-            requestUrl = req.url;
-          });
-          proxy.on('proxyRes', (proxyRes, req, res) => {
-            plaidBESimulator(
-              requestUrl.replace(env.VITE_APP_PLAID_BE_URL, ''),
-              requestBody
-            )
-              .then(JSON.stringify)
-              .then(res.end.bind(res));
-          });
-        },
-      },
     },
-  },
 
-  preview: {
-    port: 4300,
-    host: 'localhost',
-  },
+    preview: {
+        port: 4300,
+        host: 'localhost',
+    },
 
-  plugins: [
-    macrosPlugin(),
-    svgr(),
-    viteTsConfigPaths({
-      root: './',
-    }),
-    react(),
-  ],
+    plugins: [
+        macrosPlugin(),
+        svgr(),
+        viteTsConfigPaths({
+            root: './',
+        }),
+        react(),
+    ],
 });
+
+function proxyApiHandler(
+    apiUrl: string | undefined,
+    PORT: number,
+    handler: (endpoint: string, requestData: object) => Promise<object>
+): Record<string, ProxyOptions> | {} {
+    return apiUrl
+        ? {
+              [apiUrl]: {
+                  target: `http://0.0.0.0:${PORT}/`,
+                  selfHandleResponse: true,
+                  rewrite: (path) => path.replace(apiUrl, ''),
+                  configure: (proxy /*, options*/) => {
+                      let requestBody: object;
+                      proxy.on('proxyReq', (proxyReq, req, res) => {
+                          const requestEndpoint = req.url.replace(apiUrl, '');
+                          const requestData = req.read();
+                          try {
+                              requestBody = JSON.parse(requestData);
+                          } catch (e) {
+                              console.error(
+                                  'error parse request data',
+                                  e.message
+                              );
+                              requestBody = {};
+                              res.writeHead(400, {
+                                  'Content-Type': 'text/plain',
+                              });
+                              res.end(`bad request`);
+                          }
+
+                          handler(requestEndpoint, requestBody)
+                              .then(JSON.stringify)
+                              .then(res.end.bind(res))
+                              .catch((e) => {
+                                  res.writeHead(500, {
+                                      'Content-Type': 'text/plain',
+                                  });
+                                  res.end(`server error: ${e?.message}`);
+                              });
+                      });
+                  },
+              },
+          }
+        : {};
+}
