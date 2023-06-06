@@ -29,7 +29,31 @@ SECRET_KEY = 'django-insecure-zamzfbodhhn2p_p)m7=pzzz^j4kosi0)q6gk_4_%^hl_y%hyuc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == 'True'
 
+
 ALLOWED_HOSTS = []
+
+
+def get_ecs_helthcheck_ips():
+    # https://docs.aws.amazon.com/AmazonECS/latest/userguide/task-metadata-endpoint-v3-fargate.html
+
+    # this is probably better to be replaced with some static path that does not do any validation...
+    import requests
+    ip_addresses = []
+    try:
+        r = requests.get(os.getenv('ECS_CONTAINER_METADATA_URI'), timeout=0.05)
+    except requests.exceptions.RequestException:
+        return []
+    if r.ok:
+        task_metadata = r.json()
+        for container in task_metadata['Containers']:
+            for network in container.get('Networks', []):
+                if network['NetworkMode'] == 'awsvpc':
+                    ip_addresses.extend(network['IPv4Addresses'])
+    return list(set(ip_addresses))
+
+
+ALLOWED_HOSTS += get_ecs_helthcheck_ips()
+
 
 # Application definition
 
