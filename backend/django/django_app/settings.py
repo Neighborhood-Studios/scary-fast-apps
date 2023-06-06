@@ -40,7 +40,7 @@ def get_ecs_helthcheck_ips():
     import requests
     ip_addresses = []
     try:
-        r = requests.get(os.getenv('ECS_CONTAINER_METADATA_URI'), timeout=0.05)
+        r = requests.get(os.getenv('ECS_CONTAINER_METADATA_URI_V4') + '/task', timeout=0.05)
     except requests.exceptions.RequestException:
         return []
     if r.ok:
