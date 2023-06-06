@@ -1,0 +1,94 @@
+#!AWSTemplateFormat
+# TODO: this needs to be integrated into hasura template since load balancer and clusters are shared
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create django app service for existing cluster and load balancer
+Parameters:
+  ECSClusterName:
+    Type: String
+    Default: devCluster
+  SecurityGroupIDs:
+    Type: CommaDelimitedList
+    Default: sg-0789f252c9acf60e0
+  VpcID:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-0813c9d5475677cd8
+  PrivateSubnetIDs:
+    Type: CommaDelimitedList
+    Default: 'subnet-0e1edb91d06782376,subnet-0f2e3ae9b28fa4da2'
+  ListenerRuleArn:
+    Type: String
+    Default: arn:aws:elasticloadbalancing:us-west-1:232267884965:listener/app/devHasura-ELB/8c271855bf2aa386/ca491609cb3466b8
+Resources:
+  TargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      HealthCheckPath: /
+      Name: djangoApp-8080
+      Port: 8080
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckProtocol: HTTP
+      VpcId: !Ref VpcID
+  ListenerRule:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - /da
+      ListenerArn: !Ref ListenerRuleArn
+      Priority: '1'
+  ECSService:
+    Type: 'AWS::ECS::Service'
+    Properties:
+      Cluster: !Ref ECSClusterName
+      CapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Base: 0
+          Weight: 1
+      # fixme: add definition to cf
+      TaskDefinition: 'arn:aws:ecs:us-west-1:232267884965:task-definition/djangoApp:1'
+      ServiceName: djangoApp
+      SchedulingStrategy: REPLICA
+      DesiredCount: 1
+      LoadBalancers:
+        - ContainerName: djangoApp
+          ContainerPort: 8080
+          LoadBalancerName: !Ref 'AWS::NoValue'
+          TargetGroupArn: !Ref TargetGroup
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups: !Ref SecurityGroupIDs
+          Subnets: !Ref PrivateSubnetIDs
+      PlatformVersion: LATEST
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      DeploymentController:
+        Type: ECS
+      ServiceConnectConfiguration:
+        Enabled: false
+      Tags: []
+      EnableECSManagedTags: true
+    DependsOn:
+      - ListenerRule
+Outputs:
+  ClusterName:
+    Description: The cluster used to create the service.
+    Value: !Ref ECSClusterName
+  ECSService:
+    Description: The created service.
+    Value: !Ref ECSService
+  TargetGroup:
+    Description: The created target group.
+    Value: !Ref TargetGroup
+  ListenerRule:
+    Description: The updated listener rule.
+    Value: !Ref ListenerRule
