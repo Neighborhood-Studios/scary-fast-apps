@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'backend/**/*'
+      - '.github/**/*'
   workflow_dispatch:
 
 
@@ -22,8 +23,8 @@ jobs:
 
     - name: Building the image and uploading to ECR ...
       uses: kciter/aws-ecr-action@v4
-      working-directory: ./backend/
       with:
+        path: ./backend/
         access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         account_id: ${{ secrets.AWS_ACCOUNT_ID }}
