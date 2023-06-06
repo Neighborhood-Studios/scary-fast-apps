@@ -18,7 +18,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: setting up the staging env file
-      run: mv ./envs/staging/.env ./django/.env
+      run: mv ./envs/staging/.env.file ./django/.env
 
     - name: Building the image and uploading to ECR ...
       uses: kciter/aws-ecr-action@v4
