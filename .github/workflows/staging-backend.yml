@@ -16,7 +16,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: ffs wtf there is no normal change directory command?!
-      run: mv ./backend/ /tmp/backend-wow && rm -rf * .* && mv /tmp/backend-wow/* /tmp/backend-wow/.* ./
+      run: mv ./backend/ /tmp/backend-wow && rm -rf * .* ; mv /tmp/backend-wow/* /tmp/backend-wow/.* ./
 
     - name: setting up the staging env file
       run: mv ./envs/staging/.env.file ./django/.env
