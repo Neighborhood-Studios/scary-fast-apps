@@ -33,14 +33,14 @@ DEBUG = os.getenv('DEBUG') == 'True'
 ALLOWED_HOSTS = []
 
 
-def get_ecs_helthcheck_ips():
+def get_ecs_healthcheck_ips():
     # https://docs.aws.amazon.com/AmazonECS/latest/userguide/task-metadata-endpoint-v3-fargate.html
 
     # this is probably better to be replaced with some static path that does not do any validation...
     import requests
     ip_addresses = []
     try:
-        r = requests.get(os.getenv('ECS_CONTAINER_METADATA_URI_V4') + '/task', timeout=0.05)
+        r = requests.get(os.getenv('ECS_CONTAINER_METADATA_URI_V4', '') + '/task', timeout=0.05)
     except requests.exceptions.RequestException:
         return []
     if r.ok:
@@ -52,7 +52,7 @@ def get_ecs_helthcheck_ips():
     return list(set(ip_addresses))
 
 
-ALLOWED_HOSTS += get_ecs_helthcheck_ips()
+ALLOWED_HOSTS += get_ecs_healthcheck_ips()
 
 
 # Application definition
