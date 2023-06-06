@@ -2,6 +2,7 @@ name: Staging CD
 
 on:
   push:
+    branches: [master]
     paths:
       - 'backend/**/*'
       - '.github/**/*'
@@ -31,9 +32,9 @@ jobs:
         repo: sfa/django-app-staging
         region: us-west-1
         tags: latest,${{ github.sha }}
-#     - name: Updating the service ...
-#       run: |
-#         aws configure set aws_access_key_id ${{ secrets.access_key_id }}
-#         aws configure set aws_secret_access_key ${{ secrets.secret_access_key }}
-#         aws configure set region us-west-1
-#         aws ecs update-service --cluster devCluster --service djangoApp --task-definition djangoApp --force-new-deployment
+    - name: Updating the service ...
+      run: |
+        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws configure set region us-west-1
+        aws ecs update-service --cluster devCluster --service djangoApp --task-definition djangoApp --force-new-deployment
