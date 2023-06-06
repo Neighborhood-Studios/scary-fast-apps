@@ -1,0 +1,34 @@
+FROM tiangolo/uwsgi-nginx:python3.11
+
+RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests bash git libpq-dev curl make
+
+ENV LISTEN_PORT 8080
+EXPOSE 8080
+ENV NGINX_WORKER_PROCESSES auto
+
+ARG COMMIT_SHA
+ARG COMMIT_TITLE
+ARG COMMIT_TAG
+ARG BUILD_DATE
+
+ENV COMMIT_SHA=${COMMIT_SHA}
+ENV COMMIT_BRANCH=${COMMIT_TITLE}
+ENV COMMIT_TAG=${COMMIT_TAG}
+ENV BUILD_DATE=${BUILD_DATE}
+
+ENV DEBUG True
+
+ENV PYTHONUNBUFFERED 1
+ENV STATIC_ROOT "/app/static"
+COPY ./django /app
+
+WORKDIR /app/
+RUN \
+  apt-get install -y --no-install-recommends --no-install-suggests gcc libffi-dev python-dev musl-dev \
+  && pip install -r requirements.txt \
+  && apt-get remove --purge --auto-remove -y && (rm -rf /var/lib/apt/lists/* || true)
+
+
+RUN python manage.py collectstatic --noinput
+
+

@@ -1,0 +1,37 @@
+name: Staging CD
+
+on:
+  push:
+    branches: [ * ]
+    paths:
+      - 'backend/**/*'
+
+defaults:
+  working-directory: /backend/
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: setting up the staging env file
+      run: mv ./envs/staging/.env ./django/.env
+
+    - name: Building the image and uploading to ECR ...
+      uses: kciter/aws-ecr-action@v4
+      with:
+        access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+        repo: sfa/django-app-staging
+        region: us-west-1
+        tags: latest,${{ github.sha }}
+#     - name: Updating the service ...
+#       run: |
+#         aws configure set aws_access_key_id ${{ secrets.access_key_id }}
+#         aws configure set aws_secret_access_key ${{ secrets.secret_access_key }}
+#         aws configure set region us-west-1
+#         aws ecs update-service --cluster devCluster --service djangoApp --task-definition djangoApp --force-new-deployment
