@@ -22,6 +22,7 @@ jobs:
 
     - name: Building the image and uploading to ECR ...
       uses: kciter/aws-ecr-action@v4
+      working-directory: ./backend/
       with:
         access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
