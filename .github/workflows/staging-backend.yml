@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'backend/**/*'
+  workflow_dispatch:
+
 
 defaults:
   working-directory: /backend/
