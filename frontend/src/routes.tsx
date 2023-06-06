@@ -5,8 +5,8 @@ import { Home } from 'Pages/Home.tsx';
 import { PlaidComponent } from 'Pages/PlaidComponent.tsx';
 
 export const baseURL = new URL(import.meta.env.BASE_URL, window.origin);
-export const getAbsoluteUrl = (route: string) => new URL(route, baseURL.href);
-
+export const getAbsoluteRouteURL = (route: string) =>
+    new URL(route.replace(/^\//, ''), baseURL.href.replace(/([^/])$/, '$1/'));
 export enum ROUTES {
     ROOT = '/',
     STRIPE = '/stripe',
