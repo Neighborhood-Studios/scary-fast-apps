@@ -36,8 +36,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'core_utils.apps.UsersConfig',
-    'users.apps.CoreUtilsConfig',
+    'core_utils.apps.CoreUtilsConfig',
+    'users.apps.UsersConfig',
     'django_dramatiq',
     'django.contrib.admin',
     'django.contrib.auth',
