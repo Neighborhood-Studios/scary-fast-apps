@@ -1,5 +1,4 @@
 #!AWSTemplateFormat
-# TODO: this needs to be integrated into hasura template since load balancer and clusters are shared
 AWSTemplateFormatVersion: 2010-09-09
 Description: Create django app service for existing cluster and load balancer
 Parameters:
@@ -19,7 +18,7 @@ Parameters:
     Type: String
     Default: arn:aws:elasticloadbalancing:us-west-1:232267884965:listener/app/devHasura-ELB/8c271855bf2aa386/ca491609cb3466b8
 Resources:
-  TargetGroup:
+  DjangoTargetGroup:
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
       HealthCheckPath: /
@@ -29,19 +28,19 @@ Resources:
       TargetType: ip
       HealthCheckProtocol: HTTP
       VpcId: !Ref VpcID
-  ListenerRule:
+  DjangoListenerRule:
     Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
     Properties:
       Actions:
         - Type: forward
-          TargetGroupArn: !Ref TargetGroup
+          TargetGroupArn: !Ref DjangoTargetGroup
       Conditions:
         - Field: path-pattern
           Values:
             - /da
       ListenerArn: !Ref ListenerRuleArn
       Priority: '1'
-  ECSService:
+  DjangoECSService:
     Type: 'AWS::ECS::Service'
     Properties:
       Cluster: !Ref ECSClusterName
@@ -58,7 +57,7 @@ Resources:
         - ContainerName: djangoApp
           ContainerPort: 8080
           LoadBalancerName: !Ref 'AWS::NoValue'
-          TargetGroupArn: !Ref TargetGroup
+          TargetGroupArn: !Ref DjangoTargetGroup
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
@@ -78,17 +77,17 @@ Resources:
       Tags: []
       EnableECSManagedTags: true
     DependsOn:
-      - ListenerRule
+      - DjangoListenerRule
 Outputs:
   ClusterName:
     Description: The cluster used to create the service.
     Value: !Ref ECSClusterName
   ECSService:
     Description: The created service.
-    Value: !Ref ECSService
+    Value: !Ref DjangoECSService
   TargetGroup:
     Description: The created target group.
-    Value: !Ref TargetGroup
+    Value: !Ref DjangoTargetGroup
   ListenerRule:
     Description: The updated listener rule.
-    Value: !Ref ListenerRule
+    Value: !Ref DjangoListenerRule
