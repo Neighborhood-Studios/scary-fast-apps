@@ -41,13 +41,13 @@ Parameters:
     Default: 8080
 
   InternalLoadBalancerHasuraPort:
-    Description: 'The load balancer accepts traffic on the port 1001 and forwards to hasura.'
+    Description: 'The load balancer accepts traffic on the port 1101 and forwards to hasura.'
     Type: Number
-    Default: 1001
+    Default: 1101
   InternalLoadBalancerDjangoPort:
-    Description: 'The load balancer accepts traffic on the port 1002 and forwards to django.'
+    Description: 'The load balancer accepts traffic on the port 1102 and forwards to django.'
     Type: Number
-    Default: 1002
+    Default: 1102
 
   HasuraHealthCheckPath:
     Description: 'The Health check path. Hasura exposes /healthz as a health check path. Used on the LoadBalancing Target group.'
@@ -541,7 +541,7 @@ Resources:
         IntegrationHttpMethod: ANY
         PassthroughBehavior: WHEN_NO_MATCH
       RestApiId: !Ref SimpleAPI
-      ResourceId: !Ref SimpleAPIHasuraResource
+      ResourceId: !Ref SimpleAPIDjangoResource
     DependsOn:
       - NLBVpcLink
 
@@ -648,6 +648,20 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
         CacheBehaviors:
           - PathPattern: "api/*"
+            AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - POST
+            - DELETE
+            - PATCH
+            TargetOriginId: !Sub "${APIName}APIGTWOrigin"
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # CachingDisabled
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac # AllViewerExceptHostHeader
+            ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03 # SecurityHeadersPolicy
+            ViewerProtocolPolicy: redirect-to-https
+          - PathPattern: "da/*"
             AllowedMethods:
             - GET
             - HEAD
