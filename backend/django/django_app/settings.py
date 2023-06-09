@@ -33,32 +33,11 @@ DEBUG = os.getenv('DEBUG') == 'True'
 ALLOWED_HOSTS = []
 
 
-def get_ecs_healthcheck_ips():
-    # https://docs.aws.amazon.com/AmazonECS/latest/userguide/task-metadata-endpoint-v3-fargate.html
-
-    # this is probably better to be replaced with some static path that does not do any validation...
-    import requests
-    ip_addresses = []
-    try:
-        r = requests.get(os.getenv('ECS_CONTAINER_METADATA_URI_V4', '') + '/task', timeout=0.05)
-    except requests.exceptions.RequestException:
-        return []
-    if r.ok:
-        task_metadata = r.json()
-        for container in task_metadata['Containers']:
-            for network in container.get('Networks', []):
-                if network['NetworkMode'] == 'awsvpc':
-                    ip_addresses.extend(network['IPv4Addresses'])
-    return list(set(ip_addresses))
-
-
-ALLOWED_HOSTS += get_ecs_healthcheck_ips()
-
-
 # Application definition
 
 INSTALLED_APPS = [
-    'users.apps.UsersConfig',
+    'core_utils.apps.UsersConfig',
+    'users.apps.CoreUtilsConfig',
     'django_dramatiq',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -70,6 +49,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'core_utils.middleware.elb_health_check.ELBHealthCheckMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
