@@ -1,14 +1,14 @@
 import type { FC, PropsWithChildren } from 'react';
-
-import { AUTH_CONFIG } from './auth0-config';
-
+import type { AppState, Auth0ProviderOptions } from '@auth0/auth0-react';
+//
 import { Auth0Provider } from '@auth0/auth0-react';
-
-export const hasAuth = !!AUTH_CONFIG.clientId;
+import { useNavigate } from 'react-router-dom';
+//
+import { AUTH_CONFIG, hasAuth } from './auth0-config';
 
 export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     return hasAuth ? (
-        <Auth0Provider
+        <Auth0ProviderWithRedirectCallback
             clientId={AUTH_CONFIG.clientId}
             domain={AUTH_CONFIG.domain}
             authorizationParams={{
@@ -18,8 +18,22 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
             }}
         >
             {children}
-        </Auth0Provider>
+        </Auth0ProviderWithRedirectCallback>
     ) : (
         <>{children}</>
+    );
+};
+
+const Auth0ProviderWithRedirectCallback: FC<
+    PropsWithChildren<Auth0ProviderOptions>
+> = ({ children, ...props }) => {
+    const navigate = useNavigate();
+    const onRedirectCallback = (appState?: AppState) => {
+        navigate((appState && appState.returnTo) || window.location.pathname);
+    };
+    return (
+        <Auth0Provider onRedirectCallback={onRedirectCallback} {...props}>
+            {children}
+        </Auth0Provider>
     );
 };
