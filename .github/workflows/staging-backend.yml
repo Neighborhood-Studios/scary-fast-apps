@@ -19,8 +19,8 @@ jobs:
     - name: ffs wtf there is no normal change directory command?!
       run: ls -la ; mv ./backend/ /tmp/backend-wow ; rm -rf ./{.,}* || true; ls -la ; mv -f /tmp/backend-wow/{.,}* ./ || true; ls -la
 
-    - name: setting up the staging env file
-      run: mv ./envs/staging/.env.file ./django/.env
+    - name: setting up the empty env file
+      run: touch ./django/.env
 
 
     - name: Building the image and uploading to ECR ...
