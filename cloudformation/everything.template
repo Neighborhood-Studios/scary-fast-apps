@@ -7,6 +7,31 @@ Parameters:
     Type: String
     Default: 'SFA-<CHANGE_ME>'
 
+  DomainName:
+    Type: String
+    Description: The DNS name of an existing Amazon Route 53 hosted zone e.g. domainname.com
+    Default: domainname.com
+
+  AppFullDomainName:
+    Type: String
+    Description: The full domain name where static app is hosted e.g. app.domainname.com
+    Default: app.domainname.com
+  ApiFullDomainName:
+    Type: String
+    Description: The full domain name where API is hosted e.g. api.domainname.com
+    Default: app.domainname.com
+
+  APPCertificateARN:
+    Description: Arn of the main APP.<domain>
+    Type: String
+    Default: 'arn:aws:acm:us-west-1:232267884965:certificate/24177cfd-2f2c-48e1-ac7e-f2307a738069'
+    AllowedPattern: "arn:aws:acm:.*"
+  APICertificateARN:
+    Description: Arn of the main API.<domain>
+    Type: String
+    Default: 'arn:aws:acm:us-west-1:232267884965:certificate/24177cfd-2f2c-48e1-ac7e-f2307a738069'
+    AllowedPattern: "arn:aws:acm:.*"
+
   DBEndpoint:
     Description: 'The endpoint for PostgreSQL'
     Type: String
@@ -29,6 +54,11 @@ Parameters:
     Type: String
     Default: 'hasura/graphql-engine:v2.24.1'
 
+  DjangoDockerImage:
+    Description: 'Name and tag of the Django Docker Image'
+    Type: String
+    Default: '232267884965.dkr.ecr.us-west-1.amazonaws.com/sfa/django-app-staging:latest'
+
   HasuraContainerPort:
     # this can be hardcoded...
     Description: 'Hasura container exposes stuff over 8080. We need to tell this to the container definition.'
@@ -39,15 +69,6 @@ Parameters:
     Description: 'Django container exposes stuff over 8080. We need to tell this to the container definition.'
     Type: Number
     Default: 8080
-
-  InternalLoadBalancerHasuraPort:
-    Description: 'The load balancer accepts traffic on the port 1101 and forwards to hasura.'
-    Type: Number
-    Default: 1101
-  InternalLoadBalancerDjangoPort:
-    Description: 'The load balancer accepts traffic on the port 1102 and forwards to django.'
-    Type: Number
-    Default: 1102
 
   HasuraHealthCheckPath:
     Description: 'The Health check path. Hasura exposes /healthz as a health check path. Used on the LoadBalancing Target group.'
@@ -103,7 +124,7 @@ Parameters:
     Default: ''
 
 Conditions:
-  IsEnvEmpty:  !Equals [ "HasuraJWTSSecret", ""]
+  IsEnvEmpty: !Equals [ "HasuraJWTSSecret", "" ]
 
 Resources:
 
@@ -115,8 +136,12 @@ Resources:
       VpcId: !Ref 'VpcId'
       SecurityGroupIngress:
         - IpProtocol: 'tcp'
-          FromPort: 1000
-          ToPort: 2000
+          FromPort: 443
+          ToPort: 443
+          CidrIp: '0.0.0.0/0'
+        - IpProtocol: 'tcp'
+          FromPort: 80
+          ToPort: 80
           CidrIp: '0.0.0.0/0'
       Tags:
         - Key: 'Name'
@@ -134,12 +159,6 @@ Resources:
           SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
           FromPort: 8080
           ToPort: 8080
-          Description: "dunno, probably does nothing"
-        - IpProtocol: 'tcp'
-          CidrIp: !Ref VpcCIDR  # why? because NLB has no security group, at all, direct ip or cidr allowance only...
-          FromPort: 8080
-          ToPort: 8080
-          Description: "container ports access for NLB"
       Tags:
         - Key: 'Name'
           Value: !Sub '${APIName}-EC2-SecurityGroup'
@@ -148,7 +167,7 @@ Resources:
   ECSExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Join ['-', [!Ref APIName, ExecutionRole]]
+      RoleName: !Join [ '-', [ !Ref APIName, ExecutionRole ] ]
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -161,7 +180,7 @@ Resources:
   ECSTaskRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Join ['-', [!Ref APIName, TaskRole]]
+      RoleName: !Join [ '-', [ !Ref APIName, TaskRole ] ]
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -173,7 +192,7 @@ Resources:
   AutoScalingRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Join ['-', [!Ref APIName, AutoScalingRole]]
+      RoleName: !Join [ '-', [ !Ref APIName, AutoScalingRole ] ]
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -183,30 +202,30 @@ Resources:
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
 
-  NetworkLoadBalancer:
+  AppLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-#      LoadBalancerAttributes:
-#        - Key: idle_timeout.timeout_seconds  # not applicable to NLB
-#          Value: 360
-      Name: !Join ['-', [!Ref APIName, LoadBalancer]]
-      Scheme: internal  # no public ips here
-      Type: network
-#      SecurityGroups:
-#        - !Ref 'LoadBalancerSecurityGroup'
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds  # not applicable to NLB
+          Value: 360
+      Name: !Join [ '-', [ !Ref APIName, LoadBalancer ] ]
+      Scheme: internet-facing
+      Type: application
+      SecurityGroups:
+        - !Ref 'LoadBalancerSecurityGroup'
       Subnets:
-        - !Ref 'VpcPrivateSubnetA'
-        - !Ref 'VpcPrivateSubnetB'
+        - !Ref 'VpcPublicSubnetA'
+        - !Ref 'VpcPublicSubnetB'
 
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Join ['-', [!Ref APIName, Cluster]]
+      ClusterName: !Join [ '-', [ !Ref APIName, Cluster ] ]
 
   HasuraLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Join ['', [/ecs/, !Ref APIName, HasuraTaskDefinition]]
+      LogGroupName: !Join [ '', [ /ecs/, !Ref APIName, HasuraTaskDefinition ] ]
 
   #https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html
   HasuraTaskDefinition:
@@ -215,7 +234,7 @@ Resources:
     DependsOn: HasuraLogGroup
     Properties:
       # Name of the task definition. Subsequent versions of the task definition are grouped together under this name.
-      Family: !Join ['-', [!Ref APIName, HasuraTaskDefinition]]
+      Family: !Join [ '-', [ !Ref APIName, HasuraTaskDefinition ] ]
       # awsvpc is required for Fargate
       NetworkMode: awsvpc
       RequiresCompatibilities:
@@ -225,13 +244,13 @@ Resources:
       # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
       # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
       # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
-      Cpu: 512
+      Cpu: 2048
       # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
       # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
       # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
       # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
       # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
-      Memory: 1GB
+      Memory: 4GB
       # A role needed by ECS.
       # "The ARN of the task execution role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role."
       # "There is an optional task execution IAM role that you can specify with Fargate to allow your Fargate tasks to make API calls to Amazon ECR."
@@ -239,7 +258,7 @@ Resources:
       # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that grants containers in the task permission to call AWS APIs on your behalf."
       TaskRoleArn: !Ref ECSTaskRole
       ContainerDefinitions:
-        - Name: !Join ['-', [!Ref APIName, hasura-container]]
+        - Name: !Join [ '-', [ !Ref APIName, hasura-container ] ]
           Image: !Ref HasuraDockerImage
           PortMappings:
             - ContainerPort: !Ref HasuraContainerPort
@@ -287,11 +306,11 @@ Resources:
     Type: AWS::ECS::Service
     # This dependency is needed so that the load balancer is setup correctly in time
     DependsOn:
-      - NetworkLoadBalancer
-      - HasuraNLBListener
+      - AppLoadBalancer
+      - ALBListenerHTTPS
       - HasuraTargetGroup
     Properties:
-      ServiceName: !Ref APIName
+      ServiceName: !Join [ '-', [ !Ref APIName, hasura ] ]
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref HasuraTaskDefinition
       DeploymentConfiguration:
@@ -314,15 +333,15 @@ Resources:
           SecurityGroups:
             - !Ref 'EC2SecurityGroup'
       LoadBalancers:
-        - ContainerName: !Join ['-', [!Ref APIName, hasura-container]]
+        - ContainerName: !Join [ '-', [ !Ref APIName, hasura-container ] ]
           ContainerPort: !Ref HasuraContainerPort
           TargetGroupArn: !Ref HasuraTargetGroup
 
   HasuraTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    DependsOn: NetworkLoadBalancer
+    DependsOn: AppLoadBalancer
     Properties:
-      Name: !Join ['-', [!Ref APIName, tg]]
+      Name: !Join [ '-', [ !Ref APIName, tg ] ]
       Protocol: TCP
       Port: !Ref HasuraContainerPort
       HealthCheckIntervalSeconds: 10
@@ -338,17 +357,46 @@ Resources:
       TargetType: ip
       VpcId: !Ref VpcId
 
-  HasuraNLBListener:
-    # Description: "listener that forwards TCP connections from InternalLoadBalancerHasuraPort to to ECS hasura container target"
+  ALBHTTPListenerRedirector:
+     Type: AWS::ElasticLoadBalancingV2::Listener
+     Properties:
+       DefaultActions:
+         - Type: "redirect"
+           RedirectConfig:
+             Protocol: "HTTPS"
+             Port: 443
+             Host: "#{host}"
+             Path: "/#{path}"
+             Query: "#{query}"
+             StatusCode: "HTTP_301"
+       LoadBalancerArn: !Ref AppLoadBalancer
+       Port: 80
+       Protocol: "HTTP"
+
+  ALBListenerHTTPS:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
         - TargetGroupArn: !Ref HasuraTargetGroup
           Type: forward
-      LoadBalancerArn: !Ref NetworkLoadBalancer
-      Port: !Ref InternalLoadBalancerHasuraPort
-      Protocol: TCP
+      Certificates:
+        - CertificateArn: !Ref APICertificateARN
+      LoadBalancerArn: !Ref AppLoadBalancer
+      Port: 443
+      Protocol: HTTPS
 
+  DjangoListenerRuleHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref DjangoTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - /da
+      ListenerArn: !Ref ALBListenerHTTPS
+      Priority: 1
 
   # FIXME: this autoscaling thingi does not work...?!
   HasuraAutoScalingTarget:
@@ -356,7 +404,7 @@ Resources:
     Properties:
       MinCapacity: !Ref MinContainers
       MaxCapacity: !Ref MaxContainers
-      ResourceId: !Join ['/', [service, !Ref ECSCluster, !GetAtt HasuraService.Name]]
+      ResourceId: !Join [ '/', [ service, !Ref ECSCluster, !GetAtt HasuraService.Name ] ]
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
       # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that allows Application Auto Scaling to modify your scalable target."
@@ -366,7 +414,7 @@ Resources:
   AutoScalingPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: !Join ['-', [!Ref APIName, AutoScalingPolicy]]
+      PolicyName: !Join [ '-', [ !Ref APIName, AutoScalingPolicy ] ]
       PolicyType: TargetTrackingScaling
       ScalingTargetId: !Ref HasuraAutoScalingTarget
       TargetTrackingScalingPolicyConfiguration:
@@ -376,6 +424,116 @@ Resources:
         ScaleOutCooldown: 10
         # Keep things at or lower than 50% CPU utilization, for example
         TargetValue: !Ref AutoScalingTargetValue
+
+  DjangoLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [ '', [ /ecs/, !Ref APIName, DjangoTaskDefinition ] ]
+
+  DjangoAPITaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    # Makes sure the log group is created before it is used.
+    DependsOn: DjangoLogGroup
+    Properties:
+      # Name of the task definition. Subsequent versions of the task definition are grouped together under this name.
+      Family: !Join [ '-', [ !Ref APIName, DjangoTaskDefinition ] ]
+      # awsvpc is required for Fargate
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      # 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
+      # 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
+      # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
+      # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
+      # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
+      Cpu: 2048
+      # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
+      # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
+      # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
+      # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
+      # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
+      Memory: 4GB
+      # A role needed by ECS.
+      # "The ARN of the task execution role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role."
+      # "There is an optional task execution IAM role that you can specify with Fargate to allow your Fargate tasks to make API calls to Amazon ECR."
+      ExecutionRoleArn: !Ref ECSExecutionRole
+      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that grants containers in the task permission to call AWS APIs on your behalf."
+      TaskRoleArn: !Ref ECSTaskRole
+      ContainerDefinitions:
+        - Name: !Join [ '-', [ !Ref APIName, django-container ] ]
+          Image: !Ref DjangoDockerImage
+          PortMappings:
+            - ContainerPort: !Ref DjangoContainerPort
+          # Send logs to CloudWatch Logs
+          Environment:
+            - Name: 'DATA_DB_NAME'
+              Value: !Ref DBName
+            - Name: 'DATA_DB_USER'
+              Value: !Ref DBUsername
+            - Name: 'DATA_DB_PASSWORD'
+              Value: !Ref DBUserPassword
+            - Name: 'DATA_DB_HOST'
+              Value: !Ref DBEndpoint
+            - Name: 'DATA_DB_PORT'
+              Value: 5432
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref DjangoLogGroup
+              awslogs-stream-prefix: ecs
+
+  DjangoDMTQTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    # Makes sure the log group is created before it is used.
+    DependsOn: DjangoLogGroup
+    Properties:
+      # Name of the task definition. Subsequent versions of the task definition are grouped together under this name.
+      Family: !Join [ '-', [ !Ref APIName, DjangoDMTQTaskDefinition ] ]
+      # awsvpc is required for Fargate
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      # 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
+      # 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
+      # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
+      # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
+      # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
+      Cpu: 2048
+      # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
+      # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
+      # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
+      # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
+      # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
+      Memory: 4GB
+      # A role needed by ECS.
+      # "The ARN of the task execution role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role."
+      # "There is an optional task execution IAM role that you can specify with Fargate to allow your Fargate tasks to make API calls to Amazon ECR."
+      ExecutionRoleArn: !Ref ECSExecutionRole
+      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that grants containers in the task permission to call AWS APIs on your behalf."
+      TaskRoleArn: !Ref ECSTaskRole
+      ContainerDefinitions:
+        - Name: !Join [ '-', [ !Ref APIName, djangoDMTQ-container ] ]
+          Image: !Ref DjangoDockerImage
+          Command: "cd /app; python manage.py rundramatiq"
+          # Send logs to CloudWatch Logs
+          Environment:
+            - Name: 'DATA_DB_NAME'
+              Value: !Ref DBName
+            - Name: 'DATA_DB_USER'
+              Value: !Ref DBUsername
+            - Name: 'DATA_DB_PASSWORD'
+              Value: !Ref DBUserPassword
+            - Name: 'DATA_DB_HOST'
+              Value: !Ref DBEndpoint
+            - Name: 'DATA_DB_PORT'
+              Value: 5432
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref DjangoLogGroup
+              awslogs-stream-prefix: ecs
 
   DjangoTargetGroup:
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
@@ -396,21 +554,11 @@ Resources:
       TargetType: ip
       VpcId: !Ref VpcId
 
-  DjangoNLBListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref DjangoTargetGroup
-          Type: forward
-      LoadBalancerArn: !Ref NetworkLoadBalancer
-      Port: !Ref InternalLoadBalancerDjangoPort
-      Protocol: TCP
-
-  DjangoECSService:
+  DjangoAPIECSService:
     Type: AWS::ECS::Service
     DependsOn:
-      - NetworkLoadBalancer
-      - DjangoNLBListener
+      - AppLoadBalancer
+      - DjangoListenerRuleHTTPS
       - DjangoTargetGroup
     Properties:
       Cluster: !Ref ECSCluster
@@ -419,12 +567,12 @@ Resources:
           Base: 0
           Weight: 1
       # TODO: add definition to cf
-      TaskDefinition: 'arn:aws:ecs:us-west-1:232267884965:task-definition/djangoApp:1'
-      ServiceName: djangoApp
+      TaskDefinition: !Ref DjangoAPITaskDefinition
+      ServiceName: !Join [ '-', [ !Ref APIName, djangoApi ] ]
       SchedulingStrategy: REPLICA
       DesiredCount: 1
       LoadBalancers:
-        - ContainerName: djangoApp
+        - ContainerName: !Join [ '-', [ !Ref APIName, djangoApi-container ] ]
           ContainerPort: !Ref DjangoContainerPort
           TargetGroupArn: !Ref DjangoTargetGroup
 
@@ -446,9 +594,45 @@ Resources:
           Rollback: true
       DeploymentController:
         Type: ECS
-      ServiceConnectConfiguration:
-        Enabled: false
-      Tags: []
+      Tags: [ ]
+      EnableECSManagedTags: true
+
+
+  DjangoDMTQECSService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - AppLoadBalancer
+      - DjangoListenerRuleHTTPS
+      - DjangoTargetGroup
+    Properties:
+      Cluster: !Ref ECSCluster
+      CapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Base: 0
+          Weight: 1
+      TaskDefinition: !Ref DjangoDMTQTaskDefinition
+      ServiceName: !Join [ '-', [ !Ref APIName, djangoDMTQ ] ]
+      SchedulingStrategy: REPLICA
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: DISABLED
+          Subnets:
+            - !Ref 'VpcPrivateSubnetA'
+            - !Ref 'VpcPrivateSubnetB'
+          SecurityGroups:
+            - !Ref 'EC2SecurityGroup'
+      PlatformVersion: LATEST
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      DeploymentController:
+        Type: ECS
+      Tags: [ ]
       EnableECSManagedTags: true
 
   # punch SG to allow access to RDS from ECS
@@ -461,100 +645,6 @@ Resources:
       FromPort: "5432"
       SourceSecurityGroupId: !GetAtt EC2SecurityGroup.GroupId
 
-  # no the API GW...
-  NLBVpcLink:
-    Type: AWS::ApiGateway::VpcLink
-    DependsOn:
-      - NetworkLoadBalancer
-    Properties:
-      Name: !Sub '${APIName}-NLB-RandomLink'
-      TargetArns:
-        - !Ref NetworkLoadBalancer
-
-
-  # Our simple CORS compliant REST API
-  SimpleAPI:
-    Type: 'AWS::ApiGateway::RestApi'
-    Properties:
-      Description: A simple CORS compliant API
-      Name: !Ref APIName
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-
-  # The Resource (/api/) of our API
-  SimpleAPIHasuraResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      ParentId: !GetAtt
-        - SimpleAPI
-        - RootResourceId
-      PathPart: api
-      RestApiId: !Ref SimpleAPI
-
-  # The Resource (/da/) of our API
-  SimpleAPIDjangoResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      ParentId: !GetAtt
-        - SimpleAPI
-        - RootResourceId
-      PathPart: da
-      RestApiId: !Ref SimpleAPI
-
-
-  # The method to call for our API
-  ELBAPIHasuraMethod:
-    Type: AWS::ApiGateway::Method
-    #checkov:skip=CKV_AWS_59: "This API does not expose backend service"
-    Properties:
-      ApiKeyRequired: false
-      AuthorizationType: NONE
-      HttpMethod: ANY
-      OperationName: ELBProxyHasura
-      Integration:
-        Type: HTTP_PROXY
-        Uri: !Sub "http://${NetworkLoadBalancer.DNSName}:${InternalLoadBalancerHasuraPort}"
-        ConnectionType: VPC_LINK
-        ConnectionId: !Ref NLBVpcLink
-        IntegrationHttpMethod: ANY
-        PassthroughBehavior: WHEN_NO_MATCH
-      RestApiId: !Ref SimpleAPI
-      ResourceId: !Ref SimpleAPIHasuraResource
-    DependsOn:
-      - NLBVpcLink
-
-  # The method to call for our API
-  ELBAPIDjangoMethod:
-    Type: AWS::ApiGateway::Method
-    #checkov:skip=CKV_AWS_59: "This API does not expose backend service"
-    Properties:
-      ApiKeyRequired: false
-      AuthorizationType: NONE
-      HttpMethod: ANY
-      OperationName: ELBProxyDjango
-      Integration:
-        Type: HTTP_PROXY
-        Uri: !Sub "http://${NetworkLoadBalancer.DNSName}:${InternalLoadBalancerDjangoPort}"
-        ConnectionType: VPC_LINK
-        ConnectionId: !Ref NLBVpcLink
-        IntegrationHttpMethod: ANY
-        PassthroughBehavior: WHEN_NO_MATCH
-      RestApiId: !Ref SimpleAPI
-      ResourceId: !Ref SimpleAPIDjangoResource
-    DependsOn:
-      - NLBVpcLink
-
-  # A deployment resource for deploying our API
-  APIDeployment:
-    Type: 'AWS::ApiGateway::Deployment'
-    DependsOn:
-      - ELBAPIHasuraMethod
-      - ELBAPIDjangoMethod
-    Properties:
-      RestApiId: !Ref SimpleAPI
-      StageName: v1
-
 
   # The Amazon S3 bucket into which access logs from S3 (for the application) and CloudFront will be put
   LoggingBucket:
@@ -563,16 +653,16 @@ Resources:
     Properties:
       BucketName: !Sub 'react-cors-spa-${SimpleAPI}-logs'
       PublicAccessBlockConfiguration:
-        BlockPublicAcls : true
-        BlockPublicPolicy : true
-        IgnorePublicAcls : true
-        RestrictPublicBuckets : true
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
         ServerSideEncryptionConfiguration:
-        - ServerSideEncryptionByDefault:
-            SSEAlgorithm: 'AES256'
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'AES256'
       OwnershipControls:
         Rules:
           - ObjectOwnership: BucketOwnerPreferred
@@ -585,10 +675,10 @@ Resources:
     Properties:
       BucketName: !Sub 'react-cors-spa-${SimpleAPI}'
       PublicAccessBlockConfiguration:
-        BlockPublicAcls : true
-        BlockPublicPolicy : true
-        IgnorePublicAcls : true
-        RestrictPublicBuckets : true
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
       LoggingConfiguration:
         DestinationBucketName: !Ref LoggingBucket
         LogFilePrefix: s3-access-logs
@@ -596,8 +686,8 @@ Resources:
         Status: Enabled
       BucketEncryption:
         ServerSideEncryptionConfiguration:
-        - ServerSideEncryptionByDefault:
-            SSEAlgorithm: 'AES256'
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'AES256'
 
   # The Amazon S3 bucket policy for securing the bucket hosting the application
   BucketPolicy:
@@ -625,63 +715,33 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-        - DomainName: !GetAtt S3Bucket.RegionalDomainName
-          Id: !Sub "${APIName}S3Origin"
-          S3OriginConfig:
-            OriginAccessIdentity: ""
-          OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
-        - DomainName: !Sub "${SimpleAPI}.execute-api.${AWS::Region}.amazonaws.com"
-          Id: !Sub "${APIName}APIGTWOrigin"
-          CustomOriginConfig:
-            OriginProtocolPolicy: https-only
+          - DomainName: !GetAtt S3Bucket.RegionalDomainName
+            Id: !Sub "${APIName}S3Origin"
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
+
+        Aliases:
+          - !Ref AppFullDomainName
+        ViewerCertificate:
+          AcmCertificateArn: !Ref APPCertificateARN
+          SslSupportMethod: sni-only
         Enabled: 'true'
         DefaultRootObject: index.html
         DefaultCacheBehavior:
           AllowedMethods:
-          - GET
-          - HEAD
-          - OPTIONS
+            - GET
+            - HEAD
+            - OPTIONS
           TargetOriginId: !Sub "${APIName}S3Origin"
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # CachingOptimized
           OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf # CORS-S3Origin
           ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03 # SecurityHeadersPolicy
           ViewerProtocolPolicy: redirect-to-https
-        CacheBehaviors:
-          - PathPattern: "api/*"
-            AllowedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
-            - PUT
-            - POST
-            - DELETE
-            - PATCH
-            TargetOriginId: !Sub "${APIName}APIGTWOrigin"
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # CachingDisabled
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac # AllViewerExceptHostHeader
-            ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03 # SecurityHeadersPolicy
-            ViewerProtocolPolicy: redirect-to-https
-          - PathPattern: "da/*"
-            AllowedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
-            - PUT
-            - POST
-            - DELETE
-            - PATCH
-            TargetOriginId: !Sub "${APIName}APIGTWOrigin"
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # CachingDisabled
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac # AllViewerExceptHostHeader
-            ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03 # SecurityHeadersPolicy
-            ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_All
         Logging:
           Bucket: !GetAtt LoggingBucket.RegionalDomainName
           Prefix: 'cloudfront-access-logs'
-        ViewerCertificate:
-          CloudFrontDefaultCertificate: true
-          MinimumProtocolVersion: 'TLSv1.2_2021'
 
   # The Amazon CloudFront origin access control
   CloudFrontOriginAccessControl:
@@ -696,10 +756,32 @@ Resources:
         SigningBehavior: always
         SigningProtocol: sigv4
 
+  APPDNSName:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Join ['', [!Ref 'DomainName', .]]
+      RecordSets:
+      - Name: !Ref AppFullDomainName
+        Type: A
+        AliasTarget:
+          HostedZoneId: Z2FDTNDATAQYW2 # special CloudFront distribution value
+          DNSName: !GetAtt CFDistribution.DomainName
+
+  APIDNSName:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Join ['', [!Ref 'DomainName', .]]
+      RecordSets:
+      - Name: !Ref ApiFullDomainName
+        Type: A
+        AliasTarget:
+          HostedZoneId: !GetAtt AppLoadBalancer.CanonicalHostedZoneID
+          DNSName: !GetAtt AppLoadBalancer.DNSName
+
 Outputs:
   AZA:
     Description: 'AZ of A'
-    Value: !Select [0, !GetAZs '']
+    Value: !Select [ 0, !GetAZs '' ]
     Export:
       Name: !Sub '${AWS::StackName}-AZA'
   EC2SecurityGroupID:
