@@ -49,6 +49,15 @@ Parameters:
     Type: String
     Default: 'hastest1'
 
+  RedisHost:
+    Description: 'The hostname of the Redis database'
+    Type: String
+    Default: 'clustercfg.stagingcluster.xlvwpc.memorydb.us-west-1.amazonaws.com:6379'
+  RedisPort:
+    Description: 'The port of the Redis database'
+    Type: String
+    Default: '6379'
+
   HasuraDockerImage:
     Description: 'Name and tag of the Hasura Docker Image'
     Type: String
@@ -118,6 +127,10 @@ Parameters:
     Type: AWS::EC2::SecurityGroup::Id
     Description: 'ID of RDS security group that will be modified to allow access on 5432 port'
     Default: 'sg-078d62d647307abf4'
+  RedisSecurityGroupID:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: 'ID of Redis security group that will be modified to allow access on 6379 port'
+    Default: 'sg-07287fdd3d8e7aa62'
   HasuraJWTSSecret:
     Type: String
     Description: 'HASURA_GRAPHQL_JWT_SECRET value'
@@ -476,6 +489,14 @@ Resources:
               Value: !Ref DBEndpoint
             - Name: 'DATA_DB_PORT'
               Value: 5432
+            - Name: 'DATA_DB_CONN_MAX_AGE'
+              Value: "0"
+            - Name: 'DRAMATIQ_REDIS_HOST'
+              Value: !Ref RedisHost
+            - Name: 'DRAMATIQ_REDIS_PORT'
+              Value: !Ref RedisPort
+            - Name: 'DRAMATIQ_NAMESPACE'
+              Value: !Ref APIName
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -528,6 +549,14 @@ Resources:
               Value: !Ref DBEndpoint
             - Name: 'DATA_DB_PORT'
               Value: 5432
+            - Name: 'DATA_DB_CONN_MAX_AGE'
+              Value: "0"
+            - Name: 'DRAMATIQ_REDIS_HOST'
+              Value: !Ref RedisHost
+            - Name: 'DRAMATIQ_REDIS_PORT'
+              Value: !Ref RedisPort
+            - Name: 'DRAMATIQ_NAMESPACE'
+              Value: !Ref APIName
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -643,6 +672,16 @@ Resources:
       IpProtocol: "tcp"
       ToPort: "5432"
       FromPort: "5432"
+      SourceSecurityGroupId: !GetAtt EC2SecurityGroup.GroupId
+
+  # punch SG to allow access to Redis from ECS
+  SecurityGroupRedisIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref RedisSecurityGroupID
+      IpProtocol: "tcp"
+      ToPort: "6379"
+      FromPort: "6379"
       SourceSecurityGroupId: !GetAtt EC2SecurityGroup.GroupId
 
 
