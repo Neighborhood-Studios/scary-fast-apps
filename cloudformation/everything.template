@@ -345,6 +345,21 @@ Resources:
             - !Ref 'VpcPrivateSubnetB'
           SecurityGroups:
             - !Ref 'EC2SecurityGroup'
+      ServiceConnectConfiguration:
+        Enabled: true
+#        LogConfiguration:
+#          LogDriver: awslogs
+#          Options:
+#            awslogs-region: !Ref AWS::Region
+#            awslogs-group: !Ref HasuraLogGroup
+#            awslogs-stream-prefix: serviceConnect
+        Services:
+          - # DiscoveryName: String # by default portName.namespace, should be fine
+            # IngressPortOverride: Integer
+            PortName: "hasuraapp"
+            ClientAliases:
+              - Port: !Ref HasuraContainerPort
+
       LoadBalancers:
         - ContainerName: !Join [ '-', [ !Ref APIName, hasura-container ] ]
           ContainerPort: !Ref HasuraContainerPort
@@ -371,20 +386,20 @@ Resources:
       VpcId: !Ref VpcId
 
   ALBHTTPListenerRedirector:
-     Type: AWS::ElasticLoadBalancingV2::Listener
-     Properties:
-       DefaultActions:
-         - Type: "redirect"
-           RedirectConfig:
-             Protocol: "HTTPS"
-             Port: 443
-             Host: "#{host}"
-             Path: "/#{path}"
-             Query: "#{query}"
-             StatusCode: "HTTP_301"
-       LoadBalancerArn: !Ref AppLoadBalancer
-       Port: 80
-       Protocol: "HTTP"
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: "redirect"
+          RedirectConfig:
+            Protocol: "HTTPS"
+            Port: 443
+            Host: "#{host}"
+            Path: "/#{path}"
+            Query: "#{query}"
+            StatusCode: "HTTP_301"
+      LoadBalancerArn: !Ref AppLoadBalancer
+      Port: 80
+      Protocol: "HTTP"
 
   ALBListenerHTTPS:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -625,6 +640,20 @@ Resources:
         Type: ECS
       Tags: [ ]
       EnableECSManagedTags: true
+      ServiceConnectConfiguration:
+        Enabled: true
+        #        LogConfiguration:
+        #          LogDriver: awslogs
+        #          Options:
+        #            awslogs-region: !Ref AWS::Region
+        #            awslogs-group: !Ref HasuraLogGroup
+        #            awslogs-stream-prefix: serviceConnect
+        Services:
+          - # DiscoveryName: String # by default portName.namespace, should be fine
+            # IngressPortOverride: Integer
+            PortName: "djangoapp"
+            ClientAliases:
+              - Port: !Ref DjangoContainerPort
 
 
   DjangoDMTQECSService:
@@ -663,6 +692,8 @@ Resources:
         Type: ECS
       Tags: [ ]
       EnableECSManagedTags: true
+      ServiceConnectConfiguration:
+        Enabled: true
 
   # punch SG to allow access to RDS from ECS
   SecurityGroupRDSIngress:
@@ -798,24 +829,24 @@ Resources:
   APPDNSName:
     Type: AWS::Route53::RecordSetGroup
     Properties:
-      HostedZoneName: !Join ['', [!Ref 'DomainName', .]]
+      HostedZoneName: !Join [ '', [ !Ref 'DomainName', . ] ]
       RecordSets:
-      - Name: !Ref AppFullDomainName
-        Type: A
-        AliasTarget:
-          HostedZoneId: Z2FDTNDATAQYW2 # special CloudFront distribution value
-          DNSName: !GetAtt CFDistribution.DomainName
+        - Name: !Ref AppFullDomainName
+          Type: A
+          AliasTarget:
+            HostedZoneId: Z2FDTNDATAQYW2 # special CloudFront distribution value
+            DNSName: !GetAtt CFDistribution.DomainName
 
   APIDNSName:
     Type: AWS::Route53::RecordSetGroup
     Properties:
-      HostedZoneName: !Join ['', [!Ref 'DomainName', .]]
+      HostedZoneName: !Join [ '', [ !Ref 'DomainName', . ] ]
       RecordSets:
-      - Name: !Ref ApiFullDomainName
-        Type: A
-        AliasTarget:
-          HostedZoneId: !GetAtt AppLoadBalancer.CanonicalHostedZoneID
-          DNSName: !GetAtt AppLoadBalancer.DNSName
+        - Name: !Ref ApiFullDomainName
+          Type: A
+          AliasTarget:
+            HostedZoneId: !GetAtt AppLoadBalancer.CanonicalHostedZoneID
+            DNSName: !GetAtt AppLoadBalancer.DNSName
 
 Outputs:
   AZA:
