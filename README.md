@@ -80,14 +80,14 @@ So we decided to build an opinionated framework to help us build new things fast
 ## Architecture
 This is two part application.
 
-The first part is the Frontend React app that is statically hosted on https://app.\<domain> via S3 and CloudFront distribution.
+The first part is the Frontend React app that is statically hosted on `https://app.<domain>` via S3 and CloudFront distribution.
 
 The second part is the Backend that consists of GraphQL API provided by Hasura 
 and Django for background tasks and management. 
-Both hosted using ECS services via Application Load Balancer and accessible at https://api.\<domain>
+Both hosted using ECS services via Application Load Balancer and accessible at `https://api.<domain>`
 
 Backend uses Redis and PostgreSQL for data storage and caching.
 
-Auth0 is used to provide end user authentication and a0 JWT token can be directly feed into Hasura API for role based authorization to DB tables.
+Auth0 is used to provide end user authentication and Auth0 JWT token can be directly feed into Hasura API for role based authorization to DB tables.
 
 Django is used to build said database tables - provides data migrations, and provides API that Hasura cannot provide for 3rd party integration.
