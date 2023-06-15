@@ -1,8 +1,8 @@
-import { HttpLink, split } from "@apollo/client";
-import { getMainDefinition } from "@apollo/client/utilities";
-import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
-import { createClient } from "graphql-ws";
-import { setContext } from "@apollo/client/link/context";
+import { HttpLink, split } from '@apollo/client';
+import { getMainDefinition } from '@apollo/client/utilities';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { createClient } from 'graphql-ws';
+import { setContext } from '@apollo/client/link/context';
 
 //https://www.apollographql.com/docs/react/networking/authentication
 export function splitLink(token?: string, getToken?: () => Promise<string>) {

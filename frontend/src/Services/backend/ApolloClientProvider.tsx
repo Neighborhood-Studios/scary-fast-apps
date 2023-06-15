@@ -27,16 +27,21 @@ export const ApolloClientProvider: FC<
 };
 
 const ApolloClientWithAuthProvider: FC<PropsWithChildren> = ({ children }) => {
-    const [authToken, setAuthToken] = useState<string>('');
-    const { getAccessTokenSilently } = useAuth0();
+    const [authToken, setAuthToken] = useState<string>();
+    const { getAccessTokenSilently, isAuthenticated, isLoading } = useAuth0();
+
     const client = useMemo(
-        () => createApolloClient(authToken, getAccessTokenSilently),
+        () =>
+            createApolloClient(
+                authToken,
+                authToken ? getAccessTokenSilently : undefined
+            ),
         [authToken, getAccessTokenSilently]
     );
 
     useEffect(() => {
-        getAccessTokenSilently().then(setAuthToken);
-    }, [getAccessTokenSilently]);
+        if (isAuthenticated) getAccessTokenSilently().then(setAuthToken);
+    }, [isAuthenticated, getAccessTokenSilently]);
 
     useEffect(
         () => () => {
@@ -45,7 +50,11 @@ const ApolloClientWithAuthProvider: FC<PropsWithChildren> = ({ children }) => {
         [client]
     );
 
-    return <ApolloProvider client={client}>{children}</ApolloProvider>;
+    return isLoading ? (
+        <>Authenticating...</>
+    ) : (
+        <ApolloProvider client={client}>{children}</ApolloProvider>
+    );
 };
 
 const ApolloClientNoAuthProvider: FC<PropsWithChildren> = ({ children }) => {
