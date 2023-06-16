@@ -12,4 +12,7 @@ module.exports = {
     // 'react-refresh/only-export-components': 'warn',
     'eqeqeq': ["error", "smart"]
   },
+  ignorePatterns: [
+    'src/GQL/types-and-hooks.ts'
+  ]
 }

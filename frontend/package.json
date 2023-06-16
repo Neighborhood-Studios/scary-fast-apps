@@ -9,7 +9,9 @@
     "build": "tsc && vite build",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "tsc:watch": "tsc -p tsconfig.json --watch"
+    "tsc:watch": "tsc -p tsconfig.json --watch",
+    "dev:generate-gql-schema": "dotenv -c -- pnpm ./generate-gql-schema.js",
+    "gql-codegen": "pnpm dev:generate-gql-schema && graphql-codegen --config codegen.ts"
   },
   "dependencies": {
     "@apollo/client": "^3.7.14",
@@ -28,6 +30,10 @@
     "recoil": "^0.7.7"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "4.0.1",
+    "@graphql-codegen/client-preset": "4.0.0",
+    "@graphql-codegen/introspection": "4.0.0",
+    "@graphql-codegen/typescript-react-apollo": "^3.3.7",
     "@types/node": "^20.2.5",
     "@types/react": "^18.2.6",
     "@types/react-dom": "^18.2.4",
@@ -42,6 +48,7 @@
     "eslint-plugin-jsx-a11y": "6.6.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.1",
+    "graphqurl": "^1.0.1",
     "postcss": "^8.4.23",
     "prettier": "^2.8.8",
     "sass": "^1.62.1",
