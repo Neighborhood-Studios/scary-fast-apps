@@ -36,9 +36,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'core_utils.apps.CoreUtilsConfig',
-    'users.apps.UsersConfig',
     'django_dramatiq',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,6 +45,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
+
+    'core_utils.apps.CoreUtilsConfig',
+    'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
@@ -135,7 +137,7 @@ STATIC_ROOT = os.getenv('STATIC_ROOT') or ''
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-DRAMATIQ_REDIS_HOST = os.environ.get('DRAMATIQ_REDIS_HOST', '127.0.0.1')
+DRAMATIQ_REDIS_HOST = os.environ.get('DRAMATIQ_REDIS_HOST')
 DRAMATIQ_REDIS_PORT = os.environ.get('DRAMATIQ_REDIS_PORT')
 DRAMATIQ_NAMESPACE = os.environ.get('DRAMATIQ_NAMESPACE', 'dramatiq_django')
 DRAMATIQ_BROKER = {
@@ -155,6 +157,8 @@ DRAMATIQ_BROKER = {
         'django_dramatiq.middleware.DbConnectionsMiddleware',
     ]
 }
+DRAMATIQ_TASKS_DATABASE = 'default'
+DRAMATIQ_AUTODISCOVER_MODULES = ["tasks"]
 
 LOGGING = {
     'version': 1,
