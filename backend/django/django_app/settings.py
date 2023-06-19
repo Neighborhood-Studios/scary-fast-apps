@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
 
+    'django_app.apps.DjangoAppConfig',
     'core_utils.apps.CoreUtilsConfig',
     'users.apps.UsersConfig',
 ]
@@ -159,6 +160,9 @@ DRAMATIQ_BROKER = {
 }
 DRAMATIQ_TASKS_DATABASE = 'default'
 DRAMATIQ_AUTODISCOVER_MODULES = ["tasks"]
+
+print(DRAMATIQ_BROKER)
+print(os.environ)
 
 LOGGING = {
     'version': 1,
