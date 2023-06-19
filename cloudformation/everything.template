@@ -10,26 +10,26 @@ Parameters:
   DomainName:
     Type: String
     Description: The DNS name of an existing Amazon Route 53 hosted zone e.g. domainname.com
-    Default: domainname.com
+    Default: sfaconstruction.net
 
   AppFullDomainName:
     Type: String
     Description: The full domain name where static app is hosted e.g. app.domainname.com
-    Default: app.domainname.com
+    Default: appstaging.sfaconstruction.net
   ApiFullDomainName:
     Type: String
     Description: The full domain name where API is hosted e.g. api.domainname.com
-    Default: app.domainname.com
+    Default: apistaging.sfaconstruction.net
 
   APPCertificateARN:
-    Description: Arn of the main APP.<domain>
+    Description: Arn of the main APP.<domain>, must be in east-1 region
     Type: String
-    Default: 'arn:aws:acm:us-west-1:232267884965:certificate/24177cfd-2f2c-48e1-ac7e-f2307a738069'
-    AllowedPattern: "arn:aws:acm:.*"
+    Default: 'arn:aws:acm:us-east-1:232267884965:certificate/a5e33ca5-ed0e-4e02-a932-3967293590e8'
+    AllowedPattern: "arn:aws:acm:us-east-1:.*"
   APICertificateARN:
     Description: Arn of the main API.<domain>
     Type: String
-    Default: 'arn:aws:acm:us-west-1:232267884965:certificate/24177cfd-2f2c-48e1-ac7e-f2307a738069'
+    Default: 'arn:aws:acm:us-west-1:232267884965:certificate/49c55b77-6742-46e5-9d6a-0bc79f27b930'
     AllowedPattern: "arn:aws:acm:.*"
 
   DBEndpoint:
@@ -52,7 +52,7 @@ Parameters:
   RedisHost:
     Description: 'The hostname of the Redis database'
     Type: String
-    Default: 'clustercfg.stagingcluster.xlvwpc.memorydb.us-west-1.amazonaws.com:6379'
+    Default: 'clustercfg.stagingcluster.xlvwpc.memorydb.us-west-1.amazonaws.com'
   RedisPort:
     Description: 'The port of the Redis database'
     Type: String
@@ -234,6 +234,8 @@ Resources:
     Type: AWS::ECS::Cluster
     Properties:
       ClusterName: !Join [ '-', [ !Ref APIName, Cluster ] ]
+      ServiceConnectDefaults:
+        Namespace: !Ref APIName
 
   HasuraLogGroup:
     Type: AWS::Logs::LogGroup
@@ -257,13 +259,13 @@ Resources:
       # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
       # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
       # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
-      Cpu: 2048
+      Cpu: 512
       # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
       # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
       # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
       # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
       # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
-      Memory: 4GB
+      Memory: 1GB
       # A role needed by ECS.
       # "The ARN of the task execution role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role."
       # "There is an optional task execution IAM role that you can specify with Fargate to allow your Fargate tasks to make API calls to Amazon ECR."
@@ -275,6 +277,8 @@ Resources:
           Image: !Ref HasuraDockerImage
           PortMappings:
             - ContainerPort: !Ref HasuraContainerPort
+              Name: hasuraapp
+              AppProtocol: http
           # Send logs to CloudWatch Logs
           Environment:
             - Name: 'HASURA_GRAPHQL_DATABASE_URL'
@@ -347,12 +351,12 @@ Resources:
             - !Ref 'EC2SecurityGroup'
       ServiceConnectConfiguration:
         Enabled: true
-#        LogConfiguration:
-#          LogDriver: awslogs
-#          Options:
-#            awslogs-region: !Ref AWS::Region
-#            awslogs-group: !Ref HasuraLogGroup
-#            awslogs-stream-prefix: serviceConnect
+        #        LogConfiguration:
+        #          LogDriver: awslogs
+        #          Options:
+        #            awslogs-region: !Ref AWS::Region
+        #            awslogs-group: !Ref HasuraLogGroup
+        #            awslogs-stream-prefix: serviceConnect
         Services:
           - # DiscoveryName: String # by default portName.namespace, should be fine
             # IngressPortOverride: Integer
@@ -370,7 +374,7 @@ Resources:
     DependsOn: AppLoadBalancer
     Properties:
       Name: !Join [ '-', [ !Ref APIName, tg ] ]
-      Protocol: TCP
+      Protocol: HTTP
       Port: !Ref HasuraContainerPort
       HealthCheckIntervalSeconds: 10
       # will look for a 200 status code by default unless specified otherwise
@@ -474,13 +478,13 @@ Resources:
       # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
       # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
       # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
-      Cpu: 2048
+      Cpu: 512
       # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
       # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
       # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
       # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
       # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
-      Memory: 4GB
+      Memory: 1GB
       # A role needed by ECS.
       # "The ARN of the task execution role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role."
       # "There is an optional task execution IAM role that you can specify with Fargate to allow your Fargate tasks to make API calls to Amazon ECR."
@@ -488,10 +492,13 @@ Resources:
       # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that grants containers in the task permission to call AWS APIs on your behalf."
       TaskRoleArn: !Ref ECSTaskRole
       ContainerDefinitions:
-        - Name: !Join [ '-', [ !Ref APIName, django-container ] ]
+        - Name: !Join [ '-', [ !Ref APIName, djangoApi-container ] ]
           Image: !Ref DjangoDockerImage
           PortMappings:
             - ContainerPort: !Ref DjangoContainerPort
+              Name: djangoapp
+              AppProtocol: http
+
           # Send logs to CloudWatch Logs
           Environment:
             - Name: 'DATA_DB_NAME'
@@ -535,13 +542,13 @@ Resources:
       # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
       # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
       # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
-      Cpu: 2048
+      Cpu: 512
       # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
       # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
       # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
       # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
       # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
-      Memory: 4GB
+      Memory: 1GB
       # A role needed by ECS.
       # "The ARN of the task execution role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role."
       # "There is an optional task execution IAM role that you can specify with Fargate to allow your Fargate tasks to make API calls to Amazon ECR."
@@ -551,7 +558,11 @@ Resources:
       ContainerDefinitions:
         - Name: !Join [ '-', [ !Ref APIName, djangoDMTQ-container ] ]
           Image: !Ref DjangoDockerImage
-          Command: "cd /app; python manage.py rundramatiq"
+          EntryPoint:
+            - "sh"
+            - "-c"
+            - "python manage.py rundramatiq"
+          WorkingDirectory: "/app"
           # Send logs to CloudWatch Logs
           Environment:
             - Name: 'DATA_DB_NAME'
@@ -584,7 +595,7 @@ Resources:
     Properties:
       Name: !Join [ '-', [ !Ref APIName, djtg ] ]
       Port: !Ref DjangoContainerPort
-      Protocol: TCP
+      Protocol: HTTP
       HealthCheckIntervalSeconds: 10
       # will look for a 200 status code by default unless specified otherwise
       HealthCheckProtocol: HTTP
@@ -721,7 +732,13 @@ Resources:
     #checkov:skip=CKV_AWS_18: "This bucket is private and only for storing logs"
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'react-cors-spa-${SimpleAPI}-logs'
+      BucketName:
+        'Fn::Transform':
+          Name: 'String'
+          Parameters:
+            InputString: !Sub 'react-cors-spa-${APIName}-logs'
+            Operation: Lower
+
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -743,7 +760,13 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Delete
     Properties:
-      BucketName: !Sub 'react-cors-spa-${SimpleAPI}'
+      BucketName:
+        'Fn::Transform':
+          Name: 'String'
+          Parameters:
+            InputString: !Sub 'react-cors-spa-${APIName}'
+            Operation: Lower
+
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
