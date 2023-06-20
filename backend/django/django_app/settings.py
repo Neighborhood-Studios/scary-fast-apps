@@ -161,9 +161,6 @@ DRAMATIQ_BROKER = {
 DRAMATIQ_TASKS_DATABASE = 'default'
 DRAMATIQ_AUTODISCOVER_MODULES = ["tasks"]
 
-print(DRAMATIQ_BROKER)
-print(os.environ)
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
