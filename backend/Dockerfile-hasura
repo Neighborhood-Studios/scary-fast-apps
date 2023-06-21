@@ -10,6 +10,6 @@ ENV COMMIT_BRANCH=${COMMIT_TITLE}
 ENV COMMIT_TAG=${COMMIT_TAG}
 ENV BUILD_DATE=${BUILD_DATE}
 
-COPY ./hasura/data /hasura-metadata
+COPY ./hasura/data/metadata/ /hasura-metadata/
 
 
