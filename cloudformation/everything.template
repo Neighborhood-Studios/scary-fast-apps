@@ -299,6 +299,8 @@ Resources:
                 ]
             - Name: 'HASURA_GRAPHQL_ENABLE_CONSOLE'
               Value: 'true'
+            - Name: 'HASURA_GRAPHQL_ENABLE_TELEMETRY'
+              Value: 'false'
             - Name: 'HASURA_GRAPHQL_ENABLED_LOG_TYPES'
               Value: 'startup, http-log, webhook-log, websocket-log, query-log'
             - Name: 'HASURA_GRAPHQL_ADMIN_SECRET'
