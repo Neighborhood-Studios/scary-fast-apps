@@ -61,7 +61,7 @@ Parameters:
   HasuraDockerImage:
     Description: 'Name and tag of the Hasura Docker Image'
     Type: String
-    Default: 'hasura/graphql-engine:v2.24.1'
+    Default: '232267884965.dkr.ecr.us-west-1.amazonaws.com/sfa/hasura-staging:latest'
 
   DjangoDockerImage:
     Description: 'Name and tag of the Django Docker Image'
