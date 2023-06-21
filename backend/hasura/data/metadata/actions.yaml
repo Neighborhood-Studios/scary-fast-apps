@@ -9,7 +9,7 @@ actions:
           action: transform
           template: |-
             {
-              "users": {
+              "users_user": {
                 "name": {{$body.input.id}}
               }
             }
