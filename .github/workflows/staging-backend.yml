@@ -2,7 +2,7 @@ name: Staging CD
 
 on:
   push:
-    branches: [ * ]
+    # branches: [ master ]
     paths:
       - 'backend/**/*'
       - '.github/**/*'
