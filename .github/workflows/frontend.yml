@@ -1,9 +1,9 @@
 name: frontend
 on:
   push:
-    # branches: [master]
-    # paths:
-    #  - 'frontend/**/*'
+    branches: [ master ]
+    paths:
+      - 'frontend/**/*'
 jobs:
   build-frontend:
     runs-on: ubuntu-latest
