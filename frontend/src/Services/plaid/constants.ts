@@ -1,4 +1,6 @@
-const PLAID_BE_URL = import.meta.env.VITE_APP_PLAID_BE_URL;
+import { plaidBeURL } from 'app-constants.ts';
+
+const PLAID_BE_URL = plaidBeURL;
 
 export enum ENDPOINTS {
     info = `/info`,

@@ -1,7 +1,9 @@
 import type { FC } from 'react';
 import type { RouteObject } from 'react-router-dom';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 
+import { stripeEnabled } from 'app-constants.ts';
+import { ROUTES } from 'routes.tsx';
 import { Confirm } from 'Components/order/Confirm';
 import { Payment } from 'Components/order/Payment';
 import { Successful } from 'Components/order/Successful.tsx';
@@ -46,9 +48,9 @@ export const StripeOrder: FC = () => {
     const goToSuccess = () => {
         navigate(paymentRoutes.SUCCESS, { state: { orderInfo } });
     };
-    return (
-        <>
-            <Outlet context={{ orderInfo, goToPayment, goToSuccess }} />
-        </>
+    return stripeEnabled ? (
+        <Outlet context={{ orderInfo, goToPayment, goToSuccess }} />
+    ) : (
+        <Navigate to={ROUTES.ROOT} />
     );
 };

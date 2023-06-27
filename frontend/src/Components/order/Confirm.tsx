@@ -3,6 +3,8 @@ import type { PaymentIntent } from '@stripe/stripe-js';
 
 import { useOutletContext } from 'react-router-dom';
 
+import { stripeBeURL } from 'app-constants.ts';
+
 type ConfirmProps = object;
 export const Confirm: FC<ConfirmProps> = () => {
     const { goToPayment, orderInfo } = useOutletContext<OrderContext>();
@@ -18,7 +20,7 @@ export const Confirm: FC<ConfirmProps> = () => {
             'currency'
         ) as HTMLSelectElement;
 
-        fetch(import.meta.env.VITE_APP_STRIPE_BE_URL, {
+        fetch(stripeBeURL, {
             method: 'POST',
             body: JSON.stringify({
                 amount: amountEl.value,
