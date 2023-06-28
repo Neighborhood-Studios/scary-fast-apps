@@ -38,7 +38,8 @@ jobs:
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set region us-west-1
-          aws ecs update-service --cluster devCluster --service djangoApp --task-definition djangoApp --force-new-deployment
+          aws ecs update-service --cluster sfa-staging-Cluster --service sfa-staging-djangoApi --task-definition sfa-staging-DjangoTaskDefinition --force-new-deployment
+          aws ecs update-service --cluster sfa-staging-Cluster --service sfa-staging-djangoDMTQ --task-definition sfa-staging-DjangoDMTQTaskDefinition --force-new-deployment
 
   build-hasura:
     runs-on: ubuntu-latest
@@ -60,9 +61,9 @@ jobs:
           tags: latest,${{ github.sha }}
           dockerfile: Dockerfile-hasura
 
-#      - name: Updating the service ...
-#        run: |
-#          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws configure set region us-west-1
-#          aws ecs update-service --cluster devCluster --service djangoApp --task-definition djangoApp --force-new-deployment
+      - name: Updating the service ...
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region us-west-1
+          aws ecs update-service --cluster sfa-staging-Cluster --service sfa-staging-hasura --task-definition sfa-staging-HasuraTaskDefinition --force-new-deployment

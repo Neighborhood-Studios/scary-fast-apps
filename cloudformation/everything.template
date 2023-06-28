@@ -651,7 +651,6 @@ Resources:
           Rollback: true
       DeploymentController:
         Type: ECS
-      Tags: [ ]
       EnableECSManagedTags: true
       ServiceConnectConfiguration:
         Enabled: true
@@ -703,7 +702,6 @@ Resources:
           Rollback: true
       DeploymentController:
         Type: ECS
-      Tags: [ ]
       EnableECSManagedTags: true
       ServiceConnectConfiguration:
         Enabled: true
