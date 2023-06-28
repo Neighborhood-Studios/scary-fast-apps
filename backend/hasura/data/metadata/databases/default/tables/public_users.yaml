@@ -1,13 +1,13 @@
 table:
-  name: users
+  name: users_user
   schema: public
 select_permissions:
   - role: user
     permission:
       columns:
-        - id
+        - auth0id
         - name
         - last_seen
       filter:
-        id:
+        auth0id:
           _eq: X-Hasura-User-Id

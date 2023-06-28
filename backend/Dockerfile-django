@@ -20,7 +20,12 @@ ENV DEBUG True
 
 ENV PYTHONUNBUFFERED 1
 ENV STATIC_ROOT "/app/static"
-COPY ./django /app
+
+COPY django/ /app/
+
+RUN ls -la /
+RUN ls -la /app
+RUN cat /app/prestart.sh
 
 WORKDIR /app/
 RUN \

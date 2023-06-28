@@ -61,7 +61,7 @@ Parameters:
   HasuraDockerImage:
     Description: 'Name and tag of the Hasura Docker Image'
     Type: String
-    Default: 'hasura/graphql-engine:v2.24.1'
+    Default: '232267884965.dkr.ecr.us-west-1.amazonaws.com/sfa/hasura-staging:latest'
 
   DjangoDockerImage:
     Description: 'Name and tag of the Django Docker Image'
@@ -299,6 +299,8 @@ Resources:
                 ]
             - Name: 'HASURA_GRAPHQL_ENABLE_CONSOLE'
               Value: 'true'
+            - Name: 'HASURA_GRAPHQL_ENABLE_TELEMETRY'
+              Value: 'false'
             - Name: 'HASURA_GRAPHQL_ENABLED_LOG_TYPES'
               Value: 'startup, http-log, webhook-log, websocket-log, query-log'
             - Name: 'HASURA_GRAPHQL_ADMIN_SECRET'
@@ -649,7 +651,6 @@ Resources:
           Rollback: true
       DeploymentController:
         Type: ECS
-      Tags: [ ]
       EnableECSManagedTags: true
       ServiceConnectConfiguration:
         Enabled: true
@@ -701,7 +702,6 @@ Resources:
           Rollback: true
       DeploymentController:
         Type: ECS
-      Tags: [ ]
       EnableECSManagedTags: true
       ServiceConnectConfiguration:
         Enabled: true
@@ -813,7 +813,6 @@ Resources:
             S3OriginConfig:
               OriginAccessIdentity: ""
             OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
-
         Aliases:
           - !Ref AppFullDomainName
         ViewerCertificate:
@@ -821,6 +820,13 @@ Resources:
           SslSupportMethod: sni-only
         Enabled: 'true'
         DefaultRootObject: index.html
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: "/index.html"
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: "/index.html"
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
