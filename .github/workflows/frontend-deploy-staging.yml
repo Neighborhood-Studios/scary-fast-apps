@@ -1,0 +1,21 @@
+name: "Frontend Staging Deploy"
+
+on:
+  push:
+    branches: [ staging ]
+    paths:
+      - 'frontend/**/*'
+      - '.github/**/*'
+
+jobs:
+  build-frontend-dev:
+    uses: ./.github/workflows/frontend-deploy.yml
+    with:
+      deploy_target: ${{ vars.STAGING_S3_DEPLOY_TARGET }}
+      app_title: "SFA Staging Application"
+      hasura_gql: ${{ vars.STAGING_HASURA_GQL }}
+      auth0_domain: ${{ vars.STAGING_AUTH0_DOMAIN }}
+      auth0_client_id: ${{ vars.STAGING_AUTH0_CLIENT_ID }}
+      auth0_audience: ${{ vars.STAGING_AUTH0_AUDIENCE }}
+    secrets: inherit
+

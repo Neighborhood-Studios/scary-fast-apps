@@ -10,7 +10,7 @@
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "tsc:watch": "tsc -p tsconfig.json --watch",
-    "dev:generate-gql-schema": "dotenv -c -- pnpm ./generate-gql-schema.js",
+    "dev:generate-gql-schema": "dotenv -c development -- pnpm ./generate-gql-schema.js",
     "gql-codegen": "pnpm dev:generate-gql-schema && graphql-codegen --config codegen.ts"
   },
   "dependencies": {
