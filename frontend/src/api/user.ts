@@ -2,14 +2,10 @@ import { gql, useQuery } from '@apollo/client';
 
 const getUser = gql`
     query GetUsers {
-        users {
-            id
+        users_user {
+            auth0id
             name
             last_seen
-            posts {
-                id
-                message
-            }
         }
     }
 `;
