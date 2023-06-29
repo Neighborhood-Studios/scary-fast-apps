@@ -1,0 +1,21 @@
+name: "Frontend Dev Deploy"
+
+on:
+  push:
+    branches: [ dev ]
+    paths:
+      - 'frontend/**/*'
+      - '.github/**/*'
+  workflow_dispatch:
+
+jobs:
+  build-frontend-dev:
+    uses: ./.github/workflows/frontend-deploy.yml
+    with:
+      deploy_target: ${{ vars.DEV_S3_DEPLOY_TARGET }}
+      app_title: "SFA DEV Application"
+      hasura_gql: ${{ vars.DEV_HASURA_GQL }}
+      auth0_domain: ${{ vars.DEV_AUTH0_DOMAIN }}
+      auth0_client_id: ${{ vars.DEV_AUTH0_CLIENT_ID }}
+      auth0_audience: ${{ vars.DEV_AUTH0_AUDIENCE }}
+    secrets: inherit
