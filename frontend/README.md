@@ -52,12 +52,12 @@ You can name it _'hasura-jwt-claims'_ and update `onExecutePostLogin` function:
 ```js
 exports.onExecutePostLogin = async (event, api) => {
    const namespace = "https://hasura.io/jwt/claims";
-   
+
   if (event.authorization) {
+    const allowedRoles = event.authorization.roles?.length ? event.authorization.roles : ['user'];
     api.accessToken.setCustomClaim(namespace, {
-      'x-hasura-default-role': 'user',
-      // do some custom logic to decide allowed roles
-      'x-hasura-allowed-roles': ['user'],
+      'x-hasura-default-role': allowedRoles[0],
+      'x-hasura-allowed-roles': allowedRoles,
       'x-hasura-user-id': event.user.user_id
     });
   }
