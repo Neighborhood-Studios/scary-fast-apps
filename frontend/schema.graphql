@@ -13,6 +13,21 @@ directive @cached(
   refresh: Boolean! = false
 ) on QUERY
 
+"""
+Boolean expression to compare columns of type "Int". All fields are combined with logical 'AND'.
+"""
+input Int_comparison_exp {
+  _eq: Int
+  _gt: Int
+  _gte: Int
+  _in: [Int!]
+  _is_null: Boolean
+  _lt: Int
+  _lte: Int
+  _neq: Int
+  _nin: [Int!]
+}
+
 type MyQueryOutput {
   id: String!
   last_seen: timestamptz!
@@ -90,9 +105,271 @@ enum cursor_ordering {
   DESC
 }
 
+"""data available for managers only"""
+type manager_data {
+  created_at: timestamptz!
+  id: Int!
+  message: String
+  updated_at: timestamptz!
+}
+
+"""
+aggregated selection of "manager_data"
+"""
+type manager_data_aggregate {
+  aggregate: manager_data_aggregate_fields
+  nodes: [manager_data!]!
+}
+
+"""
+aggregate fields of "manager_data"
+"""
+type manager_data_aggregate_fields {
+  avg: manager_data_avg_fields
+  count(columns: [manager_data_select_column!], distinct: Boolean): Int!
+  max: manager_data_max_fields
+  min: manager_data_min_fields
+  stddev: manager_data_stddev_fields
+  stddev_pop: manager_data_stddev_pop_fields
+  stddev_samp: manager_data_stddev_samp_fields
+  sum: manager_data_sum_fields
+  var_pop: manager_data_var_pop_fields
+  var_samp: manager_data_var_samp_fields
+  variance: manager_data_variance_fields
+}
+
+"""aggregate avg on columns"""
+type manager_data_avg_fields {
+  id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "manager_data". All fields are combined with a logical 'AND'.
+"""
+input manager_data_bool_exp {
+  _and: [manager_data_bool_exp!]
+  _not: manager_data_bool_exp
+  _or: [manager_data_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  id: Int_comparison_exp
+  message: String_comparison_exp
+  updated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "manager_data"
+"""
+enum manager_data_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  manager_data_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "manager_data"
+"""
+input manager_data_inc_input {
+  id: Int
+}
+
+"""
+input type for inserting data into table "manager_data"
+"""
+input manager_data_insert_input {
+  created_at: timestamptz
+  id: Int
+  message: String
+  updated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type manager_data_max_fields {
+  created_at: timestamptz
+  id: Int
+  message: String
+  updated_at: timestamptz
+}
+
+"""aggregate min on columns"""
+type manager_data_min_fields {
+  created_at: timestamptz
+  id: Int
+  message: String
+  updated_at: timestamptz
+}
+
+"""
+response of any mutation on the table "manager_data"
+"""
+type manager_data_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [manager_data!]!
+}
+
+"""
+on_conflict condition type for table "manager_data"
+"""
+input manager_data_on_conflict {
+  constraint: manager_data_constraint!
+  update_columns: [manager_data_update_column!]! = []
+  where: manager_data_bool_exp
+}
+
+"""Ordering options when selecting data from "manager_data"."""
+input manager_data_order_by {
+  created_at: order_by
+  id: order_by
+  message: order_by
+  updated_at: order_by
+}
+
+"""primary key columns input for table: manager_data"""
+input manager_data_pk_columns_input {
+  id: Int!
+}
+
+"""
+select columns of table "manager_data"
+"""
+enum manager_data_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  message
+
+  """column name"""
+  updated_at
+}
+
+"""
+input type for updating data in table "manager_data"
+"""
+input manager_data_set_input {
+  created_at: timestamptz
+  id: Int
+  message: String
+  updated_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type manager_data_stddev_fields {
+  id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type manager_data_stddev_pop_fields {
+  id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type manager_data_stddev_samp_fields {
+  id: Float
+}
+
+"""
+Streaming cursor of the table "manager_data"
+"""
+input manager_data_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: manager_data_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input manager_data_stream_cursor_value_input {
+  created_at: timestamptz
+  id: Int
+  message: String
+  updated_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type manager_data_sum_fields {
+  id: Int
+}
+
+"""
+update columns of table "manager_data"
+"""
+enum manager_data_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  message
+
+  """column name"""
+  updated_at
+}
+
+input manager_data_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: manager_data_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: manager_data_set_input
+
+  """filter the rows which have to be updated"""
+  where: manager_data_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type manager_data_var_pop_fields {
+  id: Float
+}
+
+"""aggregate var_samp on columns"""
+type manager_data_var_samp_fields {
+  id: Float
+}
+
+"""aggregate variance on columns"""
+type manager_data_variance_fields {
+  id: Float
+}
+
 """mutation root"""
 type mutation_root {
   actionName(arg1: SampleInput!): SampleOutput
+
+  """
+  delete data from the table: "manager_data"
+  """
+  delete_manager_data(
+    """filter the rows which have to be deleted"""
+    where: manager_data_bool_exp!
+  ): manager_data_mutation_response
+
+  """
+  delete single row from the table: "manager_data"
+  """
+  delete_manager_data_by_pk(id: Int!): manager_data
+
+  """
+  delete data from the table: "posts"
+  """
+  delete_posts(
+    """filter the rows which have to be deleted"""
+    where: posts_bool_exp!
+  ): posts_mutation_response
+
+  """
+  delete single row from the table: "posts"
+  """
+  delete_posts_by_pk(id: Int!): posts
 
   """
   delete data from the table: "users_user"
@@ -106,6 +383,50 @@ type mutation_root {
   delete single row from the table: "users_user"
   """
   delete_users_user_by_pk(auth0id: String!): users_user
+
+  """
+  insert data into the table: "manager_data"
+  """
+  insert_manager_data(
+    """the rows to be inserted"""
+    objects: [manager_data_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: manager_data_on_conflict
+  ): manager_data_mutation_response
+
+  """
+  insert a single row into the table: "manager_data"
+  """
+  insert_manager_data_one(
+    """the row to be inserted"""
+    object: manager_data_insert_input!
+
+    """upsert condition"""
+    on_conflict: manager_data_on_conflict
+  ): manager_data
+
+  """
+  insert data into the table: "posts"
+  """
+  insert_posts(
+    """the rows to be inserted"""
+    objects: [posts_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: posts_on_conflict
+  ): posts_mutation_response
+
+  """
+  insert a single row into the table: "posts"
+  """
+  insert_posts_one(
+    """the row to be inserted"""
+    object: posts_insert_input!
+
+    """upsert condition"""
+    on_conflict: posts_on_conflict
+  ): posts
 
   """
   insert data into the table: "users_user"
@@ -128,6 +449,74 @@ type mutation_root {
     """upsert condition"""
     on_conflict: users_user_on_conflict
   ): users_user
+
+  """
+  update data of the table: "manager_data"
+  """
+  update_manager_data(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: manager_data_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: manager_data_set_input
+
+    """filter the rows which have to be updated"""
+    where: manager_data_bool_exp!
+  ): manager_data_mutation_response
+
+  """
+  update single row of the table: "manager_data"
+  """
+  update_manager_data_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: manager_data_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: manager_data_set_input
+    pk_columns: manager_data_pk_columns_input!
+  ): manager_data
+
+  """
+  update multiples rows of table: "manager_data"
+  """
+  update_manager_data_many(
+    """updates to execute, in order"""
+    updates: [manager_data_updates!]!
+  ): [manager_data_mutation_response]
+
+  """
+  update data of the table: "posts"
+  """
+  update_posts(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: posts_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: posts_set_input
+
+    """filter the rows which have to be updated"""
+    where: posts_bool_exp!
+  ): posts_mutation_response
+
+  """
+  update single row of the table: "posts"
+  """
+  update_posts_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: posts_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: posts_set_input
+    pk_columns: posts_pk_columns_input!
+  ): posts
+
+  """
+  update multiples rows of table: "posts"
+  """
+  update_posts_many(
+    """updates to execute, in order"""
+    updates: [posts_updates!]!
+  ): [posts_mutation_response]
 
   """
   update data of the table: "users_user"
@@ -179,9 +568,345 @@ enum order_by {
   desc_nulls_last
 }
 
+"""users posts"""
+type posts {
+  created_at: timestamptz!
+  id: Int!
+  message: String!
+  updated_at: timestamptz!
+  user: String!
+}
+
+"""
+aggregated selection of "posts"
+"""
+type posts_aggregate {
+  aggregate: posts_aggregate_fields
+  nodes: [posts!]!
+}
+
+"""
+aggregate fields of "posts"
+"""
+type posts_aggregate_fields {
+  avg: posts_avg_fields
+  count(columns: [posts_select_column!], distinct: Boolean): Int!
+  max: posts_max_fields
+  min: posts_min_fields
+  stddev: posts_stddev_fields
+  stddev_pop: posts_stddev_pop_fields
+  stddev_samp: posts_stddev_samp_fields
+  sum: posts_sum_fields
+  var_pop: posts_var_pop_fields
+  var_samp: posts_var_samp_fields
+  variance: posts_variance_fields
+}
+
+"""aggregate avg on columns"""
+type posts_avg_fields {
+  id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "posts". All fields are combined with a logical 'AND'.
+"""
+input posts_bool_exp {
+  _and: [posts_bool_exp!]
+  _not: posts_bool_exp
+  _or: [posts_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  id: Int_comparison_exp
+  message: String_comparison_exp
+  updated_at: timestamptz_comparison_exp
+  user: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "posts"
+"""
+enum posts_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  posts_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "posts"
+"""
+input posts_inc_input {
+  id: Int
+}
+
+"""
+input type for inserting data into table "posts"
+"""
+input posts_insert_input {
+  created_at: timestamptz
+  id: Int
+  message: String
+  updated_at: timestamptz
+  user: String
+}
+
+"""aggregate max on columns"""
+type posts_max_fields {
+  created_at: timestamptz
+  id: Int
+  message: String
+  updated_at: timestamptz
+  user: String
+}
+
+"""aggregate min on columns"""
+type posts_min_fields {
+  created_at: timestamptz
+  id: Int
+  message: String
+  updated_at: timestamptz
+  user: String
+}
+
+"""
+response of any mutation on the table "posts"
+"""
+type posts_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [posts!]!
+}
+
+"""
+on_conflict condition type for table "posts"
+"""
+input posts_on_conflict {
+  constraint: posts_constraint!
+  update_columns: [posts_update_column!]! = []
+  where: posts_bool_exp
+}
+
+"""Ordering options when selecting data from "posts"."""
+input posts_order_by {
+  created_at: order_by
+  id: order_by
+  message: order_by
+  updated_at: order_by
+  user: order_by
+}
+
+"""primary key columns input for table: posts"""
+input posts_pk_columns_input {
+  id: Int!
+}
+
+"""
+select columns of table "posts"
+"""
+enum posts_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  message
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  user
+}
+
+"""
+input type for updating data in table "posts"
+"""
+input posts_set_input {
+  created_at: timestamptz
+  id: Int
+  message: String
+  updated_at: timestamptz
+  user: String
+}
+
+"""aggregate stddev on columns"""
+type posts_stddev_fields {
+  id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type posts_stddev_pop_fields {
+  id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type posts_stddev_samp_fields {
+  id: Float
+}
+
+"""
+Streaming cursor of the table "posts"
+"""
+input posts_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: posts_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input posts_stream_cursor_value_input {
+  created_at: timestamptz
+  id: Int
+  message: String
+  updated_at: timestamptz
+  user: String
+}
+
+"""aggregate sum on columns"""
+type posts_sum_fields {
+  id: Int
+}
+
+"""
+update columns of table "posts"
+"""
+enum posts_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  message
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  user
+}
+
+input posts_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: posts_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: posts_set_input
+
+  """filter the rows which have to be updated"""
+  where: posts_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type posts_var_pop_fields {
+  id: Float
+}
+
+"""aggregate var_samp on columns"""
+type posts_var_samp_fields {
+  id: Float
+}
+
+"""aggregate variance on columns"""
+type posts_variance_fields {
+  id: Float
+}
+
 type query_root {
   """Derived action example"""
   MyQuery(id: String): MyQueryOutput
+
+  """
+  fetch data from the table: "manager_data"
+  """
+  manager_data(
+    """distinct select on columns"""
+    distinct_on: [manager_data_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [manager_data_order_by!]
+
+    """filter the rows returned"""
+    where: manager_data_bool_exp
+  ): [manager_data!]!
+
+  """
+  fetch aggregated fields from the table: "manager_data"
+  """
+  manager_data_aggregate(
+    """distinct select on columns"""
+    distinct_on: [manager_data_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [manager_data_order_by!]
+
+    """filter the rows returned"""
+    where: manager_data_bool_exp
+  ): manager_data_aggregate!
+
+  """fetch data from the table: "manager_data" using primary key columns"""
+  manager_data_by_pk(id: Int!): manager_data
+
+  """
+  fetch data from the table: "posts"
+  """
+  posts(
+    """distinct select on columns"""
+    distinct_on: [posts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [posts_order_by!]
+
+    """filter the rows returned"""
+    where: posts_bool_exp
+  ): [posts!]!
+
+  """
+  fetch aggregated fields from the table: "posts"
+  """
+  posts_aggregate(
+    """distinct select on columns"""
+    distinct_on: [posts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [posts_order_by!]
+
+    """filter the rows returned"""
+    where: posts_bool_exp
+  ): posts_aggregate!
+
+  """fetch data from the table: "posts" using primary key columns"""
+  posts_by_pk(id: Int!): posts
 
   """
   fetch data from the table: "users_user"
@@ -228,6 +953,120 @@ type query_root {
 }
 
 type subscription_root {
+  """
+  fetch data from the table: "manager_data"
+  """
+  manager_data(
+    """distinct select on columns"""
+    distinct_on: [manager_data_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [manager_data_order_by!]
+
+    """filter the rows returned"""
+    where: manager_data_bool_exp
+  ): [manager_data!]!
+
+  """
+  fetch aggregated fields from the table: "manager_data"
+  """
+  manager_data_aggregate(
+    """distinct select on columns"""
+    distinct_on: [manager_data_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [manager_data_order_by!]
+
+    """filter the rows returned"""
+    where: manager_data_bool_exp
+  ): manager_data_aggregate!
+
+  """fetch data from the table: "manager_data" using primary key columns"""
+  manager_data_by_pk(id: Int!): manager_data
+
+  """
+  fetch data from the table in a streaming manner: "manager_data"
+  """
+  manager_data_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [manager_data_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: manager_data_bool_exp
+  ): [manager_data!]!
+
+  """
+  fetch data from the table: "posts"
+  """
+  posts(
+    """distinct select on columns"""
+    distinct_on: [posts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [posts_order_by!]
+
+    """filter the rows returned"""
+    where: posts_bool_exp
+  ): [posts!]!
+
+  """
+  fetch aggregated fields from the table: "posts"
+  """
+  posts_aggregate(
+    """distinct select on columns"""
+    distinct_on: [posts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [posts_order_by!]
+
+    """filter the rows returned"""
+    where: posts_bool_exp
+  ): posts_aggregate!
+
+  """fetch data from the table: "posts" using primary key columns"""
+  posts_by_pk(id: Int!): posts
+
+  """
+  fetch data from the table in a streaming manner: "posts"
+  """
+  posts_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [posts_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: posts_bool_exp
+  ): [posts!]!
+
   """
   fetch data from the table: "users_user"
   """

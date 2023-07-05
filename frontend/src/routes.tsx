@@ -5,6 +5,7 @@ import { Home } from 'Pages/Home';
 import { routes as orderRoutes, StripeOrder } from 'Pages/StripeOrder';
 import { PlaidComponent } from 'Pages/PlaidComponent';
 import { UserProfile } from 'Pages/UserProfile';
+import { ManagerPage } from 'Pages/ManagerPage.tsx';
 
 export const baseURL = new URL(import.meta.env.BASE_URL, window.origin);
 export const getAbsoluteRouteURL = (route: string) =>
@@ -16,6 +17,7 @@ export enum ROUTES {
     STRIPE = '/stripe',
     PLAID = '/plaid',
     PROTECTED = '/user',
+    MANAGER = '/manager',
 }
 
 export const routes = [
@@ -35,6 +37,10 @@ export const routes = [
             {
                 path: ROUTES.PLAID,
                 element: <PlaidComponent />,
+            },
+            {
+                path: ROUTES.MANAGER,
+                element: <ManagerPage />,
             },
             {
                 path: ROUTES.PROTECTED,
