@@ -1,11 +1,12 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 //
 import { getAbsoluteRouteURL, ROUTES } from 'routes.tsx';
 
 export const LoginButton = () => {
     const { loginWithRedirect, logout, isAuthenticated, isLoading } =
         useAuth0();
+    const location = useLocation();
 
     if (isLoading) return null;
     return (
@@ -26,7 +27,15 @@ export const LoginButton = () => {
                     Log out
                 </button>
             ) : (
-                <button onClick={() => loginWithRedirect()}>Log In</button>
+                <button
+                    onClick={() =>
+                        loginWithRedirect({
+                            appState: { returnTo: location.pathname },
+                        })
+                    }
+                >
+                    Log In
+                </button>
             )}
         </>
     );
