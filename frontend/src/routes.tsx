@@ -6,6 +6,7 @@ import { routes as orderRoutes, StripeOrder } from 'Pages/StripeOrder';
 import { PlaidComponent } from 'Pages/PlaidComponent';
 import { UserProfile } from 'Pages/UserProfile';
 import { ManagerPage } from 'Pages/ManagerPage.tsx';
+import { AdminPanel } from 'Pages/AdminPanel.tsx';
 
 export const baseURL = new URL(import.meta.env.BASE_URL, window.origin);
 export const getAbsoluteRouteURL = (route: string) =>
@@ -18,6 +19,7 @@ export enum ROUTES {
     PLAID = '/plaid',
     PROTECTED = '/user',
     MANAGER = '/manager',
+    ADMIN = '/admin',
 }
 
 export const routes = [
@@ -60,6 +62,15 @@ export const routes = [
                         element: <UserProfile />,
                     },
                 ],
+            },
+            {
+                path: ROUTES.ADMIN,
+                element: (
+                    <ProtectedRoute
+                        roles={['manager']}
+                        component={AdminPanel}
+                    />
+                ),
             },
         ],
         errorElement: <div>an error has occurred</div>,

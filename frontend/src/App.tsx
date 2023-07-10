@@ -1,16 +1,18 @@
 import type { FC } from 'react';
 //
-import { useRoutes } from 'react-router-dom';
+import { Link, useRoutes } from 'react-router-dom';
 //
 import { hasAuth, LoginButton } from './Services/auth';
-import { routes } from './routes.tsx';
+import { ROUTES, routes } from './routes.tsx';
 
 type AppProps = object;
 export const App: FC<AppProps> = () => {
     const routesElement = useRoutes(routes);
     return (
         <main>
-            <div>App</div>
+            <div>
+                <Link to={ROUTES.ROOT}>App</Link>
+            </div>
             {routesElement}
             {hasAuth && (
                 <>

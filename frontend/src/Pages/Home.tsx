@@ -21,6 +21,11 @@ export const Home: FC<HomeProps> = () => {
                             <Link to={ROUTES.PLAID}>plaid example</Link>
                         </li>
                     )}
+                    <li>
+                        <Link to={ROUTES.ADMIN}>
+                            Admin section (manager only)
+                        </Link>
+                    </li>
                 </ul>
             </nav>
         </section>
