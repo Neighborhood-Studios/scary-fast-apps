@@ -23,11 +23,13 @@ export enum ADMIN_ROTES {
     DATA_TABLE_DATA = ':name',
     DATA_TABLE_DATA_ITEM = ':name/:id',
     PROFILE = 'profile',
+    FORMS = 'forms',
     FORMS_ELEMENTS = 'forms/form-elements',
     FORMS_LAYOUT = 'forms/form-layout',
     TABLES = 'tables',
     SETTINGS = 'settings',
     CHART = 'chart',
+    UI = 'ui',
     UI_ALERTS = 'ui/alerts',
     UI_BUTTONS = 'ui/buttons',
 }
