@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 //
-import { Link, useRoutes } from 'react-router-dom';
+import { Link, useMatch, useRoutes } from 'react-router-dom';
 //
 import { hasAuth, LoginButton } from './Services/auth';
 import { ROUTES, routes } from './routes.tsx';
@@ -8,7 +8,11 @@ import { ROUTES, routes } from './routes.tsx';
 type AppProps = object;
 export const App: FC<AppProps> = () => {
     const routesElement = useRoutes(routes);
-    return (
+    const isAdminDashboard = useMatch({ path: ROUTES.ADMIN, end: false });
+
+    return isAdminDashboard ? (
+        routesElement
+    ) : (
         <main>
             <div>
                 <Link to={ROUTES.ROOT}>App</Link>
