@@ -5,6 +5,7 @@ import ECommerce from './pages/Dashboard/ECommerce.tsx';
 import Loader from './common/Loader';
 import { TableData, TableDataItem, TablesList } from './pages/DataTables';
 import { generatePath } from 'react-router-dom';
+import { TableDataNew } from './pages/DataTables/TableDataNew.tsx';
 
 const Calendar = lazy(() => import('./pages/Calendar.tsx'));
 const Chart = lazy(() => import('./pages/Chart.tsx'));
@@ -21,7 +22,8 @@ export enum ADMIN_ROTES {
     CALENDAR = 'CALENDAR',
     DATA_TABLES = 'data-tables',
     DATA_TABLE_DATA = ':name',
-    DATA_TABLE_DATA_ITEM = ':name/:id',
+    DATA_TABLE_DATA_NEW = ':name/new',
+    DATA_TABLE_DATA_ITEM = ':name/:pks',
     PROFILE = 'profile',
     FORMS = 'forms',
     FORMS_ELEMENTS = 'forms/form-elements',
@@ -37,6 +39,15 @@ export const getDataModelPath = (name: string) =>
     generatePath(
         [ADMIN_ROTES.DATA_TABLES, ADMIN_ROTES.DATA_TABLE_DATA].join('/'),
         { name }
+    );
+export const getDataTableEditPath = (name: string, id: string | number) =>
+    generatePath(
+        [
+            ADMIN_ROTES.DATA_TABLES,
+            ADMIN_ROTES.DATA_TABLE_DATA,
+            ADMIN_ROTES.DATA_TABLE_DATA_ITEM,
+        ].join('/'),
+        { name, id }
     );
 export const routes: RouteObject[] = [
     { index: true, element: <ECommerce /> },
@@ -63,6 +74,10 @@ export const routes: RouteObject[] = [
             {
                 path: ADMIN_ROTES.DATA_TABLE_DATA,
                 element: <TableData />,
+            },
+            {
+                path: ADMIN_ROTES.DATA_TABLE_DATA_NEW,
+                element: <TableDataNew />,
             },
             {
                 path: ADMIN_ROTES.DATA_TABLE_DATA_ITEM,

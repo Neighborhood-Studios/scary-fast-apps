@@ -12,10 +12,9 @@ import { OutletContextType } from './DataTables.tsx';
 
 type DataTablesProps = object;
 export const TablesList: FC<DataTablesProps> = () => {
-    const { schema } = useOutletContext<OutletContextType>();
-    // const [pinned, setPinned] = useLocalStorage<string[]>('pinned', []);
+    const schemaData = useOutletContext<OutletContextType>();
     const [pinned, setPinned] = useRecoilState(pinnedTables);
-    const tables = getTables(schema);
+    const tables = getTables(schemaData);
 
     const pinTable = (name: string) => () => {
         setPinned(pinned.concat(name));

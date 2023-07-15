@@ -36,6 +36,7 @@ export const DataTables: FC<DataTablesProps> = () => {
             schema,
         };
     }, [data]);
+    // console.log(schemaData); //IgrEd dev
     return loading ? <Loader /> : schemaData && <Outlet context={schemaData} />;
 };
 
