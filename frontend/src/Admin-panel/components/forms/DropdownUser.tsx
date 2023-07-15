@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-
-import UserOne from '../../images/user/user-01.png';
-import { getAbsoluteRouteURL, ROUTES } from '../../../routes.tsx';
 import { useAuth0 } from '@auth0/auth0-react';
+
+import { getAbsoluteRouteURL, ROUTES } from 'routes.tsx';
+import { getUserRoles } from 'Services/auth/utils.ts';
 
 const DropdownUser = () => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
-    const { logout } = useAuth0();
+    const { logout, user } = useAuth0();
+    const userRole = getUserRoles(user)[0];
 
     const trigger = useRef<HTMLAnchorElement>(null);
     const dropdown = useRef<HTMLDivElement>(null);
@@ -49,13 +50,13 @@ const DropdownUser = () => {
             >
                 <span className="hidden text-right lg:block">
                     <span className="block text-sm font-medium text-black dark:text-white">
-                        Thomas Anree
+                        {user?.name}
                     </span>
-                    <span className="block text-xs">UX Designer</span>
+                    <span className="block text-xs">{userRole}</span>
                 </span>
 
-                <span className="h-12 w-12 rounded-full">
-                    <img src={UserOne} alt="User" />
+                <span className="h-12 w-12 rounded-full overflow-hidden">
+                    <img src={user?.picture} alt="User" />
                 </span>
 
                 <svg
