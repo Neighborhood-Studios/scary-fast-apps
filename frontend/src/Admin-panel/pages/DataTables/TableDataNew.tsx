@@ -9,17 +9,18 @@ import {
 } from './utils.ts';
 import { OutletContextType } from './DataTables.tsx';
 import { InputDefault } from '../../components/forms/Inputs.tsx';
+import { ErrorMsg } from '../../components/alerts/ErrorMsg.tsx';
 
 type TableDataNewProps = object;
 export const TableDataNew: FC<TableDataNewProps> = () => {
     const schemaData = useOutletContext<OutletContextType>();
     const { name } = useParams<{ name: string }>();
 
-    const { mutationString, mutationName, inputFields } =
+    const { mutationString, /* mutationName,*/ inputFields } =
         generateInsertMutation(schemaData, name || '');
 
     const query = useMemo(() => gql(mutationString), [mutationString]);
-    const [insert, { data, loading, error }] = useMutation(query);
+    const [insert, { loading, error }] = useMutation(query);
 
     const modelFields = getFieldsForModel(schemaData, name || '');
     const editableColumns = getEditableFieldsForModel(schemaData, name || '');
@@ -31,8 +32,11 @@ export const TableDataNew: FC<TableDataNewProps> = () => {
     };
     const formOnSubmit: FormEventHandler<HTMLFormElement> = (event) => {
         event.preventDefault();
+        const form = event.currentTarget;
         insert({ variables: values })
-            .then(console.log.bind(console, 'gql result'))
+            .then(() => {
+                form.reset();
+            })
             .catch(console.warn.bind(console, 'gql error'));
     };
 
@@ -66,7 +70,17 @@ export const TableDataNew: FC<TableDataNewProps> = () => {
                                 </div>
                             ))}
                         </fieldset>
-                        <button className="flex w-full justify-center rounded bg-primary p-3 font-medium text-gray">
+
+                        {error && (
+                            <ErrorMsg title=" There was error with your submission">
+                                {error.message}
+                            </ErrorMsg>
+                        )}
+
+                        <button
+                            className="flex w-full justify-center rounded bg-primary p-3 mt-4.5 font-medium text-gray disabled:opacity-50"
+                            disabled={loading}
+                        >
                             Submit
                         </button>
                     </div>
