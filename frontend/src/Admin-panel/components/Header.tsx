@@ -4,6 +4,7 @@ import DarkModeSwitcher from './DarkModeSwitcher.tsx';
 import DropdownMessage from './forms/DropdownMessage.tsx';
 import DropdownNotification from './forms/DropdownNotification.tsx';
 import DropdownUser from './forms/DropdownUser.tsx';
+import { ADMIN_ROTES } from '../routes.tsx';
 
 const Header = (props: {
     sidebarOpen: string | boolean | undefined;
@@ -59,7 +60,10 @@ const Header = (props: {
                     </button>
                     {/* <!-- Hamburger Toggle BTN --> */}
 
-                    <Link className="block flex-shrink-0 lg:hidden" to="/">
+                    <Link
+                        className="block flex-shrink-0 lg:hidden"
+                        to={ADMIN_ROTES.ADMIN_ROOT}
+                    >
                         <img src={Logo} alt="Logo" />
                     </Link>
                 </div>

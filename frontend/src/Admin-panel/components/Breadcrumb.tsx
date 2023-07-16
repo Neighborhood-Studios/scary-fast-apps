@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ADMIN_ROTES } from '../routes.tsx';
 interface BreadcrumbProps {
     pageName: string;
 }
@@ -12,7 +13,7 @@ const Breadcrumb = ({ pageName }: BreadcrumbProps) => {
             <nav>
                 <ol className="flex items-center gap-2">
                     <li>
-                        <Link to="/">Dashboard /</Link>
+                        <Link to={ADMIN_ROTES.ADMIN_ROOT}>Dashboard /</Link>
                     </li>
                     <li className="text-primary">{pageName}</li>
                 </ol>

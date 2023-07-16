@@ -4,6 +4,7 @@ import UserTwo from '../../images/user/user-02.png';
 import UserThree from '../../images/user/user-03.png';
 import UserFour from '../../images/user/user-04.png';
 import UserFive from '../../images/user/user-05.png';
+import { ADMIN_ROTES } from '../../routes.tsx';
 
 const ChatCard = () => {
     return (
@@ -14,7 +15,7 @@ const ChatCard = () => {
 
             <div>
                 <Link
-                    to="/"
+                    to={ADMIN_ROTES.ADMIN_ROOT}
                     className="flex items-center gap-5 py-3 px-7.5 hover:bg-gray-3 dark:hover:bg-meta-4"
                 >
                     <div className="relative h-14 w-14 rounded-full">
@@ -42,7 +43,7 @@ const ChatCard = () => {
                     </div>
                 </Link>
                 <Link
-                    to="/"
+                    to={ADMIN_ROTES.ADMIN_ROOT}
                     className="flex items-center gap-5 py-3 px-7.5 hover:bg-gray-3 dark:hover:bg-meta-4"
                 >
                     <div className="relative h-14 w-14 rounded-full">
@@ -63,7 +64,7 @@ const ChatCard = () => {
                     </div>
                 </Link>
                 <Link
-                    to="/"
+                    to={ADMIN_ROTES.ADMIN_ROOT}
                     className="flex items-center gap-5 py-3 px-7.5 hover:bg-gray-3 dark:hover:bg-meta-4"
                 >
                     <div className="relative h-14 w-14 rounded-full">
@@ -84,7 +85,7 @@ const ChatCard = () => {
                     </div>
                 </Link>
                 <Link
-                    to="/"
+                    to={ADMIN_ROTES.ADMIN_ROOT}
                     className="flex items-center gap-5 py-3 px-7.5 hover:bg-gray-3 dark:hover:bg-meta-4"
                 >
                     <div className="relative h-14 w-14 rounded-full">
@@ -112,7 +113,7 @@ const ChatCard = () => {
                     </div>
                 </Link>
                 <Link
-                    to="/"
+                    to={ADMIN_ROTES.ADMIN_ROOT}
                     className="flex items-center gap-5 py-3 px-7.5 hover:bg-gray-3 dark:hover:bg-meta-4"
                 >
                     <div className="relative h-14 w-14 rounded-full">
@@ -133,7 +134,7 @@ const ChatCard = () => {
                     </div>
                 </Link>
                 <Link
-                    to="/"
+                    to={ADMIN_ROTES.ADMIN_ROOT}
                     className="flex items-center gap-5 py-3 px-7.5 hover:bg-gray-3 dark:hover:bg-meta-4"
                 >
                     <div className="relative h-14 w-14 rounded-full">

@@ -1,11 +1,13 @@
 import type { RouteObject } from 'react-router-dom';
-
+import { generatePath } from 'react-router-dom';
+//
 import { lazy, Suspense } from 'react';
+//
 import ECommerce from './pages/Dashboard/ECommerce.tsx';
 import Loader from './common/Loader';
 import { TableData, TableDataItem, TablesList } from './pages/DataTables';
-import { generatePath } from 'react-router-dom';
 import { TableDataNew } from './pages/DataTables/TableDataNew.tsx';
+import { admitRoot } from '../constants.ts';
 
 const Calendar = lazy(() => import('./pages/Calendar.tsx'));
 const Chart = lazy(() => import('./pages/Chart.tsx'));
@@ -19,7 +21,8 @@ const Buttons = lazy(() => import('./pages/UiElements/Buttons.tsx'));
 const DataModels = lazy(() => import('./pages/DataTables'));
 
 export enum ADMIN_ROTES {
-    CALENDAR = 'CALENDAR',
+    ADMIN_ROOT = admitRoot,
+    CALENDAR = 'calendar',
     DATA_TABLES = 'data-tables',
     DATA_TABLE_DATA = ':name',
     DATA_TABLE_DATA_NEW = ':name/new',
