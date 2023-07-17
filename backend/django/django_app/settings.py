@@ -29,10 +29,17 @@ SECRET_KEY = 'django-insecure-zamzfbodhhn2p_p)m7=pzzz^j4kosi0)q6gk_4_%^hl_y%hyuc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == 'True'
 
+ALLOWED_HOSTS = [os.getenv("API_DOMAIN_NAME")]
 
-ALLOWED_HOSTS = []
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.RemoteUserBackend',
+]
 
+AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")  # 'dev-jnso8xn6b1daq18g.us.auth0.com'
+AUTH0_API_IDENTIFIER = os.getenv("AUTH0_API_IDENTIFIER")  # 'https://api-staging.sfaconstruction.net'
 
+AUTH0_MANAGEMENT_CLIENT_SECRET = os.getenv("AUTH0_MANAGEMENT_CLIENT_SECRET")
+AUTH0_MANAGEMENT_CLIENT_ID = os.getenv("AUTH0_MANAGEMENT_CLIENT_ID")
 # Application definition
 
 INSTALLED_APPS = [
@@ -46,6 +53,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
 
+    'rest_framework',
+
     'django_app.apps.DjangoAppConfig',
     'core_utils.apps.CoreUtilsConfig',
     'users.apps.UsersConfig',
@@ -57,9 +66,13 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.RemoteUserMiddleware',
+
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core_utils.middleware.json_exception.JsonExceptionMiddleware',
 ]
 
 ROOT_URLCONF = 'django_app.urls'
@@ -115,6 +128,25 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+}
+
+JWT_AUTH = {
+    'JWT_PAYLOAD_GET_USERNAME_HANDLER': 'core_utils.auth_utils.jwt_get_username_from_payload_handler',
+    'JWT_DECODE_HANDLER': 'core_utils.auth_utils.jwt_decode_token',
+    'JWT_ALGORITHM': 'RS256',
+    'JWT_AUDIENCE': AUTH0_API_IDENTIFIER,
+    'JWT_ISSUER': 'https://%s/' % AUTH0_DOMAIN,
+    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
+}
+
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -146,7 +178,9 @@ DRAMATIQ_BROKER = {
     'OPTIONS': {
         'host': DRAMATIQ_REDIS_HOST,
         'port': DRAMATIQ_REDIS_PORT,
-        'namespace': DRAMATIQ_NAMESPACE
+        'namespace': DRAMATIQ_NAMESPACE,
+        # 'ssl': True,
+        # 'ssl_cert_reqs': 'none',
     },
     'MIDDLEWARE': [
         'dramatiq.middleware.AgeLimit',

@@ -1,0 +1,100 @@
+name: "Deploy backend"
+on:
+  workflow_call:
+    inputs:
+
+      aws_region:
+        description: "region"
+        type: string
+
+      ecr_repo_hasura:
+        description: "ecr repo name"
+        type: string
+
+      ecr_repo_django:
+        description: "ecr repo name"
+        type: string
+
+      ecs_cluster:
+        description: "cluster name"
+        type: string
+
+      gql_service:
+        description: "hasura service name"
+        type: string
+      gql_task_def:
+        description: "hasura task definition"
+        type: string
+
+      django_service:
+        description: "django task definition"
+        type: string
+      django_task_def:
+        description: "django service name"
+        type: string
+
+      django_drq_service:
+        description: "django dramatiq service name"
+        type: string
+      django_drq_task_def:
+        description: "django dramatiq task definition"
+        type: string
+
+jobs:
+  build-django:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: ffs wtf there is no normal change directory command?!
+        run: ls -la ; mv ./backend/ /tmp/backend-wow ; rm -rf ./{.,}* || true; ls -la ; mv -f /tmp/backend-wow/{.,}* ./ || true; ls -la
+
+      - name: setting up the empty env file
+        run: touch ./django/.env
+
+      - name: Building the image and uploading to ECR ...
+        uses: kciter/aws-ecr-action@v4
+        with:
+          access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          repo: ${{ inputs.ecr_repo_django }}
+          region: ${{ inputs.aws_region }}
+          tags: latest,${{ github.sha }}
+          dockerfile: Dockerfile-django
+
+      - name: Updating the service ...
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ inputs.aws_region }}
+          aws ecs update-service --cluster ${{ inputs.ecs_cluster }} --service ${{ inputs.django_service }} --task-definition ${{ inputs.django_task_def }} --force-new-deployment
+          aws ecs update-service --cluster ${{ inputs.ecs_cluster }} --service ${{ inputs.django_drq_service }} --task-definition ${{ inputs.django_drq_task_def }} --force-new-deployment
+
+  build-hasura:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: ffs wtf there is no normal change directory command?!
+        run: ls -la ; mv ./backend/ /tmp/backend-wow ; rm -rf ./{.,}* || true; ls -la ; mv -f /tmp/backend-wow/{.,}* ./ || true; ls -la
+
+      - name: Building the image and uploading to ECR ...
+        uses: kciter/aws-ecr-action@v4
+        with:
+          access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          account_id: ${{ secrets.AWS_ACCOUNT_ID }}
+          repo: ${{ inputs.ecr_repo_hasura }}
+          region: ${{ inputs.aws_region }}
+          tags: latest,${{ github.sha }}
+          dockerfile: Dockerfile-hasura
+
+      - name: Updating the service ...
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ inputs.aws_region }}
+          aws ecs update-service --cluster ${{ inputs.ecs_cluster }} --service ${{ inputs.gql_service }} --task-definition ${{ inputs.gql_task_def }} --force-new-deployment
