@@ -34,9 +34,9 @@ export const TableData: FC<TableDataProps> = () => {
 
     const sortedColumns = sortColumns(columns, pks);
 
-    const canDelete = getCanDelete(schemaData, name || '');
-    const canEdit = getCanEdit(schemaData, name || '');
-    const canInsert = getCanInsert(schemaData, name || '');
+    const canDelete = getCanDelete(schemaData, name);
+    const canEdit = getCanEdit(schemaData, name);
+    const canInsert = getCanInsert(schemaData, name);
 
     const queryData = data?.[queryName];
     return name ? (

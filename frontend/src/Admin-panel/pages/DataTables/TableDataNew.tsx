@@ -61,11 +61,7 @@ export const TableDataNew: FC<TableDataNewProps> = () => {
                                             editableColumns.includes(colName) &&
                                             !modelFields[colName].nullable
                                         }
-                                        onInput={(e) =>
-                                            update(varName)(
-                                                e.currentTarget.value
-                                            )
-                                        }
+                                        change={update(varName)}
                                     />
                                 </div>
                             ))}

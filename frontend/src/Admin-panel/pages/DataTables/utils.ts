@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion*/
+
 import type {
     IntrospectionEnumType,
     IntrospectionField,
@@ -5,6 +7,7 @@ import type {
     IntrospectionObjectType,
 } from 'graphql/utilities';
 import type { SchemaData } from './DataTables.tsx';
+import { IntrospectionInputValue } from 'graphql/utilities/getIntrospectionQuery';
 
 export const pkDelimiter = '-=|=-';
 const insertMutationName = (name = '') => `insert_${name}_one`;
@@ -83,16 +86,11 @@ export function generateInsertMutation(schemaData: SchemaData, name: string) {
     if (!mutationType) throw Error('cannot mutate');
 
     const rootMutationType = typesMap[mutationType] as IntrospectionObjectType;
-    //get insert columns
-    //get fields
-    //get insert mutation type
+
     const insertMutationType = rootMutationType.fields.find(
         (field) => field.name === insertMutationName(name)
     ) as IntrospectionField;
-    const modelTypeModelName =
-        insertMutationType &&
-        insertMutationType.type.kind === 'OBJECT' &&
-        insertMutationType.type.name;
+    const modelTypeModelName = getTypeName(insertMutationType);
     const model = modelTypeModelName && typesMap[modelTypeModelName];
 
     const insertArgumentName = 'object';
@@ -100,12 +98,7 @@ export function generateInsertMutation(schemaData: SchemaData, name: string) {
     const insertObjectArgumentInput = insertMutationType?.args.find(
         (arg) => arg.name === insertArgumentName
     );
-    const insertObjectTypeName =
-        insertObjectArgumentInput &&
-        insertObjectArgumentInput.type.kind === 'NON_NULL' &&
-        insertObjectArgumentInput.type.ofType.kind === 'INPUT_OBJECT'
-            ? insertObjectArgumentInput?.type.ofType.name
-            : '';
+    const insertObjectTypeName = getTypeName(insertObjectArgumentInput);
 
     const insertType = typesMap[
         insertObjectTypeName
@@ -153,10 +146,7 @@ export function generateDeleteMutation(schemaData: SchemaData, name = '') {
     const mutationName = deleteMutation.name;
     const args = deleteMutation.args.map((arg) => ({
         name: arg.name,
-        type:
-            arg.type.kind === 'SCALAR'
-                ? arg.type.name
-                : Object(arg.type).ofType.name,
+        type: getTypeName(arg),
         required: arg.type.kind === 'NON_NULL',
         varName: arg.name,
     }));
@@ -182,6 +172,74 @@ export function generateDeleteMutation(schemaData: SchemaData, name = '') {
     };
 }
 
+export function generateUpdateMutation(schemaData: SchemaData, name = '') {
+    const { typesMap, mutationType } = schemaData;
+    if (!mutationType) throw Error('cannot mutate');
+
+    const rootMutationType = typesMap[mutationType] as IntrospectionObjectType;
+
+    const updateMutationType = rootMutationType.fields.find(
+        (field) => field.name === updateMutationName(name)
+    ) as IntrospectionField;
+    const modelTypeModelName = getTypeName(updateMutationType);
+    const model = modelTypeModelName && typesMap[modelTypeModelName];
+
+    const updateArgumentName = '_set';
+    const updatePksName = 'pk_columns';
+
+    const setInputObjectArgument = updateMutationType?.args.find(
+        (arg) => arg.name === updateArgumentName
+    );
+    const pksInputObjectArgument = updateMutationType?.args.find(
+        (arg) => arg.name === updatePksName
+    );
+
+    const setInputObjectTypeName = getTypeName(setInputObjectArgument);
+    const pksInputObjectTypeName = getTypeName(pksInputObjectArgument);
+
+    const setType = typesMap[
+        setInputObjectTypeName
+    ] as IntrospectionInputObjectType;
+    const pksType = typesMap[
+        pksInputObjectTypeName
+    ] as IntrospectionInputObjectType;
+
+    if (!setType || !pksType || !model) throw Error('');
+
+    const setFields = setType.inputFields.map((field) => ({
+        name: field.name,
+        type: field.type.kind === 'SCALAR' ? field.type.name : '',
+        varName: field.name.replaceAll(/[^a-z0-9_]+/gi, ''),
+    }));
+    const pksFields = pksType.inputFields.map((field) => ({
+        name: field.name,
+        type: getTypeName(field) + '!',
+        varName: 'pk_' + field.name.replaceAll(/[^a-z0-9_]+/gi, ''),
+    }));
+
+    const columns = getSelectableFields(schemaData, name);
+
+    const varsString = [...pksFields, ...setFields].map(
+        ({ varName, type }) => `$${varName}:${type}`
+    );
+
+    const pksArgs = `${updatePksName}: {${pksFields.map(
+        ({ name, varName }) => `${name}:$${varName}`
+    )}}`;
+    const mutationArgs = `${updateArgumentName}: {${setFields.map(
+        ({ name, varName }) => `${name}:$${varName}`
+    )}}`;
+
+    const mutationName = updateMutationType.name;
+    const mutationString = `
+        mutation Update_${model.name}_item(${varsString}) {
+            ${mutationName}(${pksArgs}, ${mutationArgs}) {
+                ${columns.join('\n')}
+            }
+        }
+    `;
+    return { mutationString, mutationName, pksFields, setFields };
+}
 export function getModelPrimaryKeys(schemaData: SchemaData, name: string) {
     const queries = schemaData.typesMap[
         schemaData.queryType
@@ -265,7 +323,7 @@ export function sortColumns(_columns: string[], pks: string[] = []) {
     return columns;
 }
 
-export function getCanEdit(schemaData: SchemaData, name: string) {
+export function getCanEdit(schemaData: SchemaData, name = '') {
     const rootMutation = schemaData.typesMap[
         schemaData.mutationType!
     ] as IntrospectionObjectType;
@@ -280,7 +338,7 @@ export function getCanEdit(schemaData: SchemaData, name: string) {
         )
     );
 }
-export function getCanDelete(schemaData: SchemaData, name: string) {
+export function getCanDelete(schemaData: SchemaData, name = '') {
     const rootMutation = schemaData.typesMap[
         schemaData.mutationType!
     ] as IntrospectionObjectType;
@@ -289,7 +347,7 @@ export function getCanDelete(schemaData: SchemaData, name: string) {
         (field) => field.name === deleteMutationName(name)
     );
 }
-export function getCanInsert(schemaData: SchemaData, name: string) {
+export function getCanInsert(schemaData: SchemaData, name = '') {
     const rootMutation = schemaData.typesMap[
         schemaData.mutationType!
     ] as IntrospectionObjectType;
@@ -297,4 +355,16 @@ export function getCanInsert(schemaData: SchemaData, name: string) {
     return !!rootMutation?.fields.find(
         (field) => field.name === insertMutationName(name)
     );
+}
+
+function getTypeName(
+    objectType?: IntrospectionInputValue | IntrospectionField
+) {
+    let type = objectType?.type ?? null;
+    let typeName: string | null = null;
+    while (type) {
+        typeName = 'name' in type ? type.name : null;
+        type = 'ofType' in type ? type.ofType : null;
+    }
+    return typeName || '';
 }
