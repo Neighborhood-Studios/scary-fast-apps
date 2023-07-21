@@ -51,9 +51,9 @@ Parameters:
     Type: String
     Default: 'devpostgres.cvde1gulz0vk.us-west-1.rds.amazonaws.com'
   DBUsername:
-    Description: 'The username that will be used for the root admin user in PostgreSQL'
+    Description: 'The DB username that will be used for the root admin user in PostgreSQL'
     Type: String
-    Default: 'hastest1'
+    Default: 'sfa_dev'
   DBUserPassword:
     Description: 'The password that will be used alongside the root admin username'
     Type: String
@@ -62,6 +62,15 @@ Parameters:
     Description: 'The name of the PostgreSQL database'
     Type: String
     Default: 'hastest1'
+
+  HasuraDBUsername:
+    Description: 'The DB username that will be used for hasura, with only select\update permissions in PostgreSQL'
+    Type: String
+    Default: 'sfa_dev_hasura'
+  HasuraDBUserPassword:
+    Description: 'The password that will be used alongside the root admin username'
+    Type: String
+    Default: '!hastest!'
 
   RedisHost:
     Description: 'The hostname of the Redis database'
@@ -302,9 +311,9 @@ Resources:
                   '',
                   [
                     'postgres://',
-                    !Ref 'DBUsername',
+                    !Ref 'HasuraDBUsername',
                     ':',
-                    !Ref 'DBUserPassword',
+                    !Ref 'HasuraDBUserPassword',
                     '@',
                     !Ref 'DBEndpoint',
                     ':5432/',
