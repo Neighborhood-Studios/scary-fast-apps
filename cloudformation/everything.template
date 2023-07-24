@@ -21,6 +21,20 @@ Parameters:
     Description: The full domain name where API is hosted e.g. api.domainname.com
     Default: apistaging.sfaconstruction.net
 
+  a0DomainName:
+    Type: String
+    Description: Domain name of a0 tenant. Something like dev-jnso8xn6b1daq18g.us.auth0.com
+  a0ApiIdentifier:
+    Type: String
+    Description: a0 API identifier of Frontend app, e.g. https://api-staging.sfaconstruction.net
+
+  a0ManagementClientSecret:
+    Type: String
+    Description: Client secret for a0 management API
+  a0ManagementClientId:
+    Type: String
+    Description: Client id for a0 management API
+
   APPCertificateARN:
     Description: Arn of the main APP.<domain>, must be in east-1 region
     Type: String
@@ -37,9 +51,9 @@ Parameters:
     Type: String
     Default: 'devpostgres.cvde1gulz0vk.us-west-1.rds.amazonaws.com'
   DBUsername:
-    Description: 'The username that will be used for the root admin user in PostgreSQL'
+    Description: 'The DB username that will be used for the root admin user in PostgreSQL'
     Type: String
-    Default: 'hastest1'
+    Default: 'sfa_dev'
   DBUserPassword:
     Description: 'The password that will be used alongside the root admin username'
     Type: String
@@ -49,10 +63,19 @@ Parameters:
     Type: String
     Default: 'hastest1'
 
+  HasuraDBUsername:
+    Description: 'The DB username that will be used for hasura, with only select\update permissions in PostgreSQL'
+    Type: String
+    Default: 'sfa_dev_hasura'
+  HasuraDBUserPassword:
+    Description: 'The password that will be used alongside the root admin username'
+    Type: String
+    Default: '!hastest!'
+
   RedisHost:
     Description: 'The hostname of the Redis database'
     Type: String
-    Default: 'clustercfg.stagingcluster.xlvwpc.memorydb.us-west-1.amazonaws.com'
+    Default: 'stagingnew.xlvwpc.clustercfg.memorydb.us-west-1.amazonaws.com'
   RedisPort:
     Description: 'The port of the Redis database'
     Type: String
@@ -259,13 +282,13 @@ Resources:
       # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
       # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
       # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
-      Cpu: 512
+      Cpu: 1024
       # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
       # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
       # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
       # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
       # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
-      Memory: 1GB
+      Memory: 2GB
       # A role needed by ECS.
       # "The ARN of the task execution role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role."
       # "There is an optional task execution IAM role that you can specify with Fargate to allow your Fargate tasks to make API calls to Amazon ECR."
@@ -288,9 +311,9 @@ Resources:
                   '',
                   [
                     'postgres://',
-                    !Ref 'DBUsername',
+                    !Ref 'HasuraDBUsername',
                     ':',
-                    !Ref 'DBUserPassword',
+                    !Ref 'HasuraDBUserPassword',
                     '@',
                     !Ref 'DBEndpoint',
                     ':5432/',
@@ -428,7 +451,7 @@ Resources:
       Conditions:
         - Field: path-pattern
           Values:
-            - /da
+            - "/da/*"
       ListenerArn: !Ref ALBListenerHTTPS
       Priority: 1
 
@@ -480,13 +503,13 @@ Resources:
       # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
       # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
       # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
-      Cpu: 512
+      Cpu: 1024
       # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
       # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
       # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
       # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
       # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
-      Memory: 1GB
+      Memory: 2GB
       # A role needed by ECS.
       # "The ARN of the task execution role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role."
       # "There is an optional task execution IAM role that you can specify with Fargate to allow your Fargate tasks to make API calls to Amazon ECR."
@@ -521,6 +544,16 @@ Resources:
               Value: !Ref RedisPort
             - Name: 'DRAMATIQ_NAMESPACE'
               Value: !Ref APIName
+            - Name: 'AUTH0_DOMAIN'
+              Value: !Ref a0DomainName
+            - Name: 'AUTH0_API_IDENTIFIER'
+              Value: !Ref a0ApiIdentifier
+            - Name: 'AUTH0_MANAGEMENT_CLIENT_SECRET'
+              Value: !Ref a0ManagementClientSecret
+            - Name: 'AUTH0_MANAGEMENT_CLIENT_ID'
+              Value: !Ref a0ManagementClientId
+            - Name: 'API_DOMAIN_NAME'
+              Value: !Ref ApiFullDomainName
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -544,13 +577,13 @@ Resources:
       # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
       # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
       # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
-      Cpu: 512
+      Cpu: 1024
       # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
       # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
       # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
       # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
       # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
-      Memory: 1GB
+      Memory: 2GB
       # A role needed by ECS.
       # "The ARN of the task execution role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role."
       # "There is an optional task execution IAM role that you can specify with Fargate to allow your Fargate tasks to make API calls to Amazon ECR."
@@ -585,6 +618,16 @@ Resources:
               Value: !Ref RedisPort
             - Name: 'DRAMATIQ_NAMESPACE'
               Value: !Ref APIName
+            - Name: 'AUTH0_DOMAIN'
+              Value: !Ref a0DomainName
+            - Name: 'AUTH0_API_IDENTIFIER'
+              Value: !Ref a0ApiIdentifier
+            - Name: 'AUTH0_MANAGEMENT_CLIENT_SECRET'
+              Value: !Ref a0ManagementClientSecret
+            - Name: 'AUTH0_MANAGEMENT_CLIENT_ID'
+              Value: !Ref a0ManagementClientId
+            - Name: 'API_DOMAIN_NAME'
+              Value: !Ref ApiFullDomainName
           LogConfiguration:
             LogDriver: awslogs
             Options:
