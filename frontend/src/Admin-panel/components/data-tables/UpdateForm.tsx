@@ -9,11 +9,11 @@ import {
     getSelectableFields,
     sortColumns,
 } from '../../pages/DataTables/utils.ts';
-import { InputDefault } from '../forms/Inputs.tsx';
 
 import { OutletContextType } from '../../pages/DataTables/DataTables.tsx';
 import { ErrorMsg } from '../alerts/ErrorMsg.tsx';
 import { SuccessMsg } from '../alerts/SuccessMsg.tsx';
+import { typeComponents } from './data-types/types.tsx';
 
 type UpdateFormProps = {
     tableName: string;
@@ -22,7 +22,9 @@ type UpdateFormProps = {
 export const UpdateForm: FC<UpdateFormProps> = ({ tableName, initialData }) => {
     const schemaData = useOutletContext<OutletContextType>();
     const [data, setData] = useState(initialData);
-    const [values, setValues] = useState<Record<string, string | number>>({});
+    const [values, setValues] = useState<Record<string, string | number>>({
+        ...initialData,
+    });
 
     const { mutationString, mutationName, pksFields, setFields } =
         generateUpdateMutation(schemaData, tableName);
@@ -59,16 +61,12 @@ export const UpdateForm: FC<UpdateFormProps> = ({ tableName, initialData }) => {
             <fieldset className="p-6.5 disabled:opacity-50" disabled={loading}>
                 {sortColumns(selectableColumns, pkKeys).map((colName) => (
                     <div className="mb-4.5" key={colName}>
-                        <InputDefault
-                            label={colName}
-                            name={colName}
-                            defaultValue={data[colName]}
+                        <FieldEditComponent
+                            colName={colName}
+                            value={values[colName]}
+                            colData={modelFields[colName]}
                             disabled={!editableColumns.includes(colName)}
-                            required={
-                                editableColumns.includes(colName) &&
-                                !modelFields[colName].nullable
-                            }
-                            change={updateField(colName)}
+                            updateField={updateField(colName)}
                         />
                     </div>
                 ))}
@@ -82,5 +80,27 @@ export const UpdateForm: FC<UpdateFormProps> = ({ tableName, initialData }) => {
                 Submit
             </button>
         </form>
+    );
+};
+
+const FieldEditComponent: FC<{
+    colName: string;
+    colData: ReturnType<typeof getFieldsForModel>[string];
+    value: any;
+    disabled: boolean;
+    updateField(newVal: any): void;
+}> = ({ colName, value, colData, updateField, disabled }) => {
+    const { EditComponent } = typeComponents(colData.type);
+
+    return (
+        <EditComponent
+            label={colName}
+            description={colData.description}
+            name={colName}
+            value={value}
+            change={updateField}
+            disabled={disabled}
+            required={!disabled && !colData.nullable}
+        />
     );
 };

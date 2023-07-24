@@ -9,6 +9,7 @@ import {
     pkDelimiter,
 } from '../../pages/DataTables/utils.ts';
 import { ReactComponent as EditSVG } from '../../images/actions/edit.svg';
+import { typeComponents } from './data-types/types.tsx';
 
 type DataRowProps = {
     tableName: string;
@@ -71,12 +72,12 @@ export const DataRow: FC<DataRowProps> = ({
                     className="border-b border-[#eee] py-5 px-4 dark:border-strokedark"
                     key={colName}
                 >
-                    <p className="text-black dark:text-white">
+                    <div className="text-black dark:text-white">
                         {renderColumnValue(
                             modelFields[colName],
                             rowData[colName]
                         )}
-                    </p>
+                    </div>
                 </td>
             ))}
         </tr>
@@ -85,15 +86,8 @@ export const DataRow: FC<DataRowProps> = ({
 
 function renderColumnValue(
     colData: ReturnType<typeof getFieldsForModel>[string],
-    value: string | number | boolean | unknown
+    value: unknown
 ) {
-    switch (colData.type) {
-        case 'timestamptz':
-            return new Date(String(value)).toLocaleString();
-        case 'Boolean':
-        case 'Int':
-        case 'String':
-        default:
-            return String(value);
-    }
+    const { ViewComponent } = typeComponents(colData.type);
+    return <ViewComponent value={value} />;
 }
