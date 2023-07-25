@@ -86,9 +86,9 @@ export const UpdateForm: FC<UpdateFormProps> = ({ tableName, initialData }) => {
 const FieldEditComponent: FC<{
     colName: string;
     colData: ReturnType<typeof getFieldsForModel>[string];
-    value: any;
+    value: unknown;
     disabled: boolean;
-    updateField(newVal: any): void;
+    updateField(newVal: unknown): void;
 }> = ({ colName, value, colData, updateField, disabled }) => {
     const { EditComponent } = typeComponents(colData.type);
 

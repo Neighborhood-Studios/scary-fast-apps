@@ -36,37 +36,35 @@ export const DataRow: FC<DataRowProps> = ({
 
     return (
         <tr className={isDeleting ? 'opacity-50' : ''}>
-            {canEdit || canDelete ? (
-                <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
-                    <div className="flex flex-row flex-nowrap gap-2 align-middle">
-                        {canDelete && (
-                            <DeleteItem
-                                name={tableName}
-                                data={rowData}
-                                onDeleteError={() => {
-                                    setIsDeleting(false);
-                                }}
-                                onDeleteSuccess={refetch}
-                                onDeleteStart={() => setIsDeleting(true)}
-                                disabled={isDeleting}
-                            />
-                        )}
-                        {canEdit && (
-                            <Link
-                                title="edit row"
-                                className="leading-[0px]"
-                                to={primaryKeys
-                                    .map((pk) => rowData[pk])
-                                    .join(pkDelimiter)}
-                            >
-                                <button className="hover:text-primary">
-                                    <EditSVG />
-                                </button>
-                            </Link>
-                        )}
-                    </div>
-                </td>
-            ) : null}
+            <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
+                <div className="flex flex-row flex-nowrap gap-2 align-middle">
+                    {canDelete && (
+                        <DeleteItem
+                            name={tableName}
+                            data={rowData}
+                            onDeleteError={() => {
+                                setIsDeleting(false);
+                            }}
+                            onDeleteSuccess={refetch}
+                            onDeleteStart={() => setIsDeleting(true)}
+                            disabled={isDeleting}
+                        />
+                    )}
+                    {canEdit && (
+                        <Link
+                            title="edit row"
+                            className="leading-[0px]"
+                            to={primaryKeys
+                                .map((pk) => rowData[pk])
+                                .join(pkDelimiter)}
+                        >
+                            <button className="hover:text-primary">
+                                <EditSVG />
+                            </button>
+                        </Link>
+                    )}
+                </div>
+            </td>
             {columns.map((colName) => (
                 <td
                     className="border-b border-[#eee] py-5 px-4 dark:border-strokedark"

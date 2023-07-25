@@ -1,11 +1,11 @@
 import type { FC } from 'react';
 import type { IntrospectionSchema, IntrospectionType } from 'graphql/utilities';
 
+import { useMemo } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import { Outlet } from 'react-router-dom';
 
 import Loader from '../../common/Loader';
-import { useMemo } from 'react';
 
 export type SchemaData = {
     queryType: string;
