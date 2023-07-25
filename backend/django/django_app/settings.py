@@ -46,6 +46,9 @@ AUTH0_MANAGEMENT_CLIENT_ID = os.getenv("AUTH0_MANAGEMENT_CLIENT_ID")
 ONESIGNAL_API_KEY = os.getenv("ONESIGNAL_API_KEY")
 ONESIGNAL_APP_ID = os.getenv("ONESIGNAL_APP_ID")
 
+# see https://documentation.onesignal.com/docs/twilio-setup
+ONESIGNAL_TWILIO_FROM_NUMBER = os.getenv("ONESIGNAL_TWILIO_FROM_NUMBER")
+
 # Application definition
 
 INSTALLED_APPS = [

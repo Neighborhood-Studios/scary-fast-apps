@@ -132,6 +132,11 @@ Parameters:
     Type: String
     Default: ''
 
+  OneSignalTwilioFromNumber:
+    Description: 'Twilio phone number used for outgoing sms, must be linked to onesignal account'
+    Type: String
+    Default: ''
+
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: VPC that has access to the postgres db
@@ -568,6 +573,8 @@ Resources:
               Value: !Ref OneSignalAppId
             - Name: 'ONESIGNAL_API_KEY'
               Value: !Ref OneSignalApiKey
+            - Name: 'ONESIGNAL_TWILIO_FROM_NUMBER'
+              Value: !Ref OneSignalTwilioFromNumber
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -646,6 +653,8 @@ Resources:
               Value: !Ref OneSignalAppId
             - Name: 'ONESIGNAL_API_KEY'
               Value: !Ref OneSignalApiKey
+            - Name: 'ONESIGNAL_TWILIO_FROM_NUMBER'
+              Value: !Ref OneSignalTwilioFromNumber
           LogConfiguration:
             LogDriver: awslogs
             Options:
