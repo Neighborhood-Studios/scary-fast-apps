@@ -83,11 +83,11 @@ export const UpdateForm: FC<UpdateFormProps> = ({ tableName, initialData }) => {
     );
 };
 
-const FieldEditComponent: FC<{
+export const FieldEditComponent: FC<{
     colName: string;
     colData: ReturnType<typeof getFieldsForModel>[string];
     value: unknown;
-    disabled: boolean;
+    disabled?: boolean;
     updateField(newVal: unknown): void;
 }> = ({ colName, value, colData, updateField, disabled }) => {
     const { EditComponent } = typeComponents(colData.type);

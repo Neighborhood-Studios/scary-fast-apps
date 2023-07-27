@@ -2,14 +2,10 @@ import type { FC, FormEventHandler } from 'react';
 import { useMemo, useState } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
 import { gql, useMutation } from '@apollo/client';
-import {
-    generateInsertMutation,
-    getEditableFieldsForModel,
-    getFieldsForModel,
-} from './utils.ts';
+import { generateInsertMutation, getFieldsForModel } from './utils.ts';
 import { OutletContextType } from './DataTables.tsx';
-import { InputDefault } from '../../components/forms/Inputs.tsx';
 import { ErrorMsg } from '../../components/alerts/ErrorMsg.tsx';
+import { FieldEditComponent } from '../../components/data-tables/UpdateForm.tsx';
 
 type TableDataNewProps = object;
 export const TableDataNew: FC<TableDataNewProps> = () => {
@@ -23,7 +19,6 @@ export const TableDataNew: FC<TableDataNewProps> = () => {
     const [insert, { loading, error }] = useMutation(query);
 
     const modelFields = getFieldsForModel(schemaData, name || '');
-    const editableColumns = getEditableFieldsForModel(schemaData, name || '');
 
     const [values, setValues] = useState<Record<string, string>>({});
 
@@ -53,15 +48,11 @@ export const TableDataNew: FC<TableDataNewProps> = () => {
                         <fieldset disabled={loading}>
                             {inputFields.map(({ name: colName, varName }) => (
                                 <div className="mb-4.5" key={colName}>
-                                    <InputDefault
-                                        label={colName}
-                                        name={colName}
-                                        defaultValue={''}
-                                        required={
-                                            editableColumns.includes(colName) &&
-                                            !modelFields[colName].nullable
-                                        }
-                                        change={update(varName)}
+                                    <FieldEditComponent
+                                        colName={colName}
+                                        value={values[varName] ?? null}
+                                        colData={modelFields[colName]}
+                                        updateField={update(varName)}
                                     />
                                 </div>
                             ))}
