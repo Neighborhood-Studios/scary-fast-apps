@@ -8,6 +8,7 @@ import type {
 } from 'graphql/utilities';
 import type { SchemaData } from './DataTables.tsx';
 import { IntrospectionInputValue } from 'graphql/utilities/getIntrospectionQuery';
+import { isEmpty } from 'lodash';
 
 export const pkDelimiter = '-=|=-';
 const insertMutationName = (name = '') => `insert_${name}_one`;
@@ -33,6 +34,7 @@ export function getTables(schemaData: SchemaData) {
 export function generateQueryForModel(
     schemaData: SchemaData,
     name = '',
+    orderBy: Record<string, string>,
     withPagination?: boolean
 ) {
     const model = schemaData.typesMap[name] as IntrospectionObjectType;
@@ -67,17 +69,25 @@ export function generateQueryForModel(
     let paginationArgs = '';
     if (countQuery) {
         paginationVars = `($limit: Int, $offset: Int)`;
-        paginationArgs = `(limit: $limit, offset: $offset)`;
+        paginationArgs = `limit: $limit, offset: $offset`;
     }
 
+    const orderByArgs = isEmpty(orderBy)
+        ? ''
+        : `order_by: {${Object.entries(orderBy)
+              .filter(([col]) => columns.includes(col))
+              .map(([col, dir]) => `${col}:${dir}`)}}`;
+
+    const queryArgs = [paginationArgs, orderByArgs].filter(Boolean);
     const queryString = `
         query ${name}DataQuery ${paginationVars} {
-            ${queryName} ${paginationArgs} {
+            ${queryName} ${queryArgs.length ? `(${queryArgs})` : ''} {
                 ${columns.join('\n')}
             }
             ${countQuery}
         }
     `;
+
     return {
         queryString,
         queryName,

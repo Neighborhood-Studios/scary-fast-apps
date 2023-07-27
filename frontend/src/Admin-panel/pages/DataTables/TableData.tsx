@@ -1,6 +1,6 @@
-import type { FC } from 'react';
+import type { FC, MouseEventHandler } from 'react';
 //
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { gql, useLazyQuery } from '@apollo/client';
@@ -28,7 +28,15 @@ import { ConfigPopup } from '../../components/data-tables/ConfigPopup.tsx';
 import { Paginator } from '../../components/paginator';
 import { usePage } from '../../hooks/usePage.ts';
 
+import { ReactComponent as OrderBySVG } from '../../images/icon/icon-order-by.svg';
+import { ReactComponent as OrderASCSVG } from '../../images/icon/icon-order-by-asc.svg';
+import { ReactComponent as OrderDESCSVG } from '../../images/icon/icon-order-by-desc.svg';
+import { useLocationState } from '../../hooks/useLocationState.ts';
+
 type TableDataProps = object;
+const ORDER_DIR = ['asc', 'desc'] as const;
+type OrderDirType = (typeof ORDER_DIR)[number];
+
 export const TableData: FC<TableDataProps> = () => {
     const { name } = useParams<{ name: string }>();
     const schemaData = useOutletContext<OutletContextType>();
@@ -36,12 +44,20 @@ export const TableData: FC<TableDataProps> = () => {
         tableConfigSelector(name ?? '')
     );
     const [page, setPage] = usePage();
+    const [locationState, , updateLocationState] = useLocationState<{
+        orderBy: Record<string, OrderDirType>;
+        key?: string;
+    }>(name);
+
+    const [orderBy, setOrderBy] = useState<Record<string, OrderDirType>>(
+        locationState.orderBy ?? {}
+    );
 
     const [showConfig, setShowConfig] = useRecoilState(showTableConfigAtom);
     const configRef = useRef<HTMLDivElement>(null);
 
     const { queryString, queryName, aggregationQueryName, columns } =
-        generateQueryForModel(schemaData, name);
+        generateQueryForModel(schemaData, name, orderBy);
 
     const pks = getModelPrimaryKeys(schemaData, name || '');
     const modelFields = getFieldsForModel(schemaData, name || '');
@@ -71,6 +87,26 @@ export const TableData: FC<TableDataProps> = () => {
     const count: number | undefined =
         aggregationQueryName &&
         get(data, [aggregationQueryName, 'aggregate', 'count']);
+
+    const sortByColumn =
+        (colName: string): MouseEventHandler =>
+        () =>
+            setOrderBy((orderBy) => {
+                const newDirection =
+                    ORDER_DIR[ORDER_DIR.indexOf(orderBy[colName]) + 1];
+                return newDirection ? { [colName]: newDirection } : {};
+            });
+
+    useEffect(() => {
+        updateLocationState({ orderBy });
+    }, [orderBy, updateLocationState]);
+
+    useLayoutEffect(() => {
+        if (name !== locationState.key) {
+            setOrderBy({});
+        }
+    }, [name, locationState.key]);
+
     return name ? (
         <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
             <h4 className="mb-6 text-xl font-semibold text-black dark:text-white flex flex-row align-middle">
@@ -110,8 +146,15 @@ export const TableData: FC<TableDataProps> = () => {
                                                     modelFields[colName]
                                                         .description
                                                 }
+                                                onClick={sortByColumn(colName)}
                                             >
-                                                {colName}
+                                                <div className="flex flex-row flex-nowrap justify-between items-center cursor-pointer">
+                                                    {colName}
+                                                    {getSortIcon(
+                                                        orderBy,
+                                                        colName
+                                                    )}
+                                                </div>
                                             </th>
                                         ))}
                                     </tr>
@@ -164,3 +207,14 @@ export const TableData: FC<TableDataProps> = () => {
         </div>
     ) : null;
 };
+
+function getSortIcon(sortBy: Record<string, OrderDirType>, colName: string) {
+    switch (sortBy[colName]) {
+        case 'asc':
+            return <OrderASCSVG />;
+        case 'desc':
+            return <OrderDESCSVG />;
+        default:
+            return <OrderBySVG />;
+    }
+}
