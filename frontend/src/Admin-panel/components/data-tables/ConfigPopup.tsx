@@ -7,22 +7,27 @@ import { tableConfigSelector } from 'Recoil/data-tables';
 type ConfigPopupProps = {
     tableName: string;
     availableColumns: string[];
+    hasPagination: boolean;
+    onPageSizeChange?(pageSize: number): void;
 };
 export const ConfigPopup = forwardRef<HTMLDivElement, ConfigPopupProps>(
-    ({ tableName, availableColumns }, ref) => {
+    ({ tableName, availableColumns, hasPagination, onPageSizeChange }, ref) => {
         const [tableConfig, setTableConfig] = useRecoilState(
             tableConfigSelector(tableName)
         );
-        const itemsOnPage = tableConfig.itemsOnPage;
+        const pageSize = tableConfig.pageSize;
         const visibleColumns = tableConfig.visibleColumns ?? availableColumns;
 
         const updatePageSize: FormEventHandler<HTMLInputElement> = ({
             currentTarget: { value },
-        }) =>
+        }) => {
+            onPageSizeChange?.(+value);
             setTableConfig((config) => ({
                 ...config,
-                itemsOnPage: +value,
+                pageSize: +value,
             }));
+        };
+
         const updateEnabledColumns: FormEventHandler<HTMLInputElement> = ({
             currentTarget: { name, checked },
         }) =>
@@ -55,37 +60,43 @@ export const ConfigPopup = forwardRef<HTMLDivElement, ConfigPopupProps>(
                     <i>{tableName}</i> preferences
                 </h5>
                 <div className="flex flex-row gap-3.5">
-                    <div className="flex-grow">
-                        <h6 className="font-semibold">Select page size:</h6>
-                        <ul>
-                            {availablePageSizes.map((pageSize) => (
-                                <li
-                                    key={pageSize}
-                                    className="whitespace-nowrap"
-                                >
-                                    <label>
-                                        <input
-                                            type="radio"
-                                            name="page-size"
-                                            value={pageSize}
-                                            defaultChecked={
-                                                pageSize === itemsOnPage
-                                            }
-                                            onChange={updatePageSize}
-                                        />{' '}
-                                        {pageSize} items
-                                    </label>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                    <div
-                        className="align-middle w-[1px] self-stretch"
-                        style={{
-                            background:
-                                'linear-gradient(to bottom, transparent, #aeb7c0 20%, #aeb7c0 80%, transparent )',
-                        }}
-                    />
+                    {hasPagination && (
+                        <>
+                            <div className="flex-grow">
+                                <h6 className="font-semibold">
+                                    Select page size:
+                                </h6>
+                                <ul>
+                                    {availablePageSizes.map((_pageSize) => (
+                                        <li
+                                            key={_pageSize}
+                                            className="whitespace-nowrap"
+                                        >
+                                            <label>
+                                                <input
+                                                    type="radio"
+                                                    name="page-size"
+                                                    value={_pageSize}
+                                                    checked={
+                                                        _pageSize === pageSize
+                                                    }
+                                                    onChange={updatePageSize}
+                                                />{' '}
+                                                {_pageSize} items
+                                            </label>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div
+                                className="align-middle w-[1px] self-stretch"
+                                style={{
+                                    background:
+                                        'linear-gradient(to bottom, transparent, #aeb7c0 20%, #aeb7c0 80%, transparent )',
+                                }}
+                            />
+                        </>
+                    )}
                     <div className="flex-grow">
                         <h6 className="font-semibold">Visible columns:</h6>
                         <ul>

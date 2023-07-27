@@ -13,6 +13,7 @@ export const pkDelimiter = '-=|=-';
 const insertMutationName = (name = '') => `insert_${name}_one`;
 const deleteMutationName = (name = '') => `delete_${name}_by_pk`;
 const updateMutationName = (name = '') => `update_${name}_by_pk`;
+const aggregationQueryName = (name = '') => `${name}_aggregate`;
 
 export function getTables(schemaData: SchemaData) {
     const { queryType, typesMap } = schemaData;
@@ -29,27 +30,60 @@ export function getTables(schemaData: SchemaData) {
     return rootQueries.map(({ name }) => typesMap[name]);
 }
 
-export function generateQueryForModel(schemaData: SchemaData, name = '') {
+export function generateQueryForModel(
+    schemaData: SchemaData,
+    name = '',
+    withPagination?: boolean
+) {
     const model = schemaData.typesMap[name] as IntrospectionObjectType;
 
     const queries = schemaData.typesMap[
         schemaData.queryType
     ] as IntrospectionObjectType;
     const queryField = queries.fields.find((query) => query.name === name);
+    const aggregationQueryField = queries.fields.find(
+        (query) => query.name === aggregationQueryName(name)
+    );
 
     if (!model || !queryField) throw Error('no query for table');
 
     const columns = getSelectableFields(schemaData, name);
+    const queryName = queryField.name;
+    const aggregationName = aggregationQueryField?.name;
 
     if (!columns.length) throw Error('no fields to query');
+
+    withPagination = (withPagination && !!aggregationName) ?? !!aggregationName;
+
+    const countQuery =
+        aggregationName && withPagination
+            ? `${aggregationName} {
+            aggregate {
+                count
+            }
+        }`
+            : '';
+    let paginationVars = '';
+    let paginationArgs = '';
+    if (countQuery) {
+        paginationVars = `($limit: Int, $offset: Int)`;
+        paginationArgs = `(limit: $limit, offset: $offset)`;
+    }
+
     const queryString = `
-        query ${name}DataQuery {
-            ${queryField.name} {
+        query ${name}DataQuery ${paginationVars} {
+            ${queryName} ${paginationArgs} {
                 ${columns.join('\n')}
             }
+            ${countQuery}
         }
     `;
-    return { queryString, queryName: queryField.name, columns };
+    return {
+        queryString,
+        queryName,
+        aggregationQueryName: aggregationName,
+        columns,
+    };
 }
 
 export function generateQueryByPk(

@@ -3,13 +3,13 @@ import { atom, selectorFamily } from 'recoil';
 type TablesConfig = Record<
     string,
     {
-        itemsOnPage: number;
+        pageSize: number;
         visibleColumns: string[] | null;
     }
 >;
 const DEFAULT_ITEMS_ON_PAGE = 5;
 const DEFAULT_TABLE_CONFIG = {
-    itemsOnPage: DEFAULT_ITEMS_ON_PAGE,
+    pageSize: DEFAULT_ITEMS_ON_PAGE,
     visibleColumns: null,
 };
 const tablesConfigKey = 'tables-config';

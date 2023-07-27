@@ -6,6 +6,7 @@ type DropdownProps = {
     triggerEl: ReactElement;
     popup?: ReactElement;
     popupClass?: string;
+    initialState?: boolean;
     onStateChange?(state: boolean): void;
     dropDownRef?: RefObject<HTMLDivElement>;
 };
@@ -13,10 +14,11 @@ export const Dropdown: FC<DropdownProps> = ({
     triggerEl,
     popup,
     popupClass,
+    initialState,
     onStateChange,
     dropDownRef,
 }) => {
-    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(!!initialState);
 
     const triggerRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(dropDownRef?.current ?? null);
