@@ -1,38 +1,34 @@
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { useCallback, useLayoutEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useCallback, useLayoutEffect } from 'react';
+import { useLocationState } from './useLocationState.ts';
 
-export function usePage() {
+export function usePage(key = '') {
     const [searchParams, setSearchParams] = useSearchParams();
-    const { state } = useLocation();
-    const stateRef = useRef(state);
-    stateRef.current = state;
 
-    const navigate = useNavigate();
-    const navigateRef = useRef(navigate);
-    navigateRef.current = navigate;
+    const [locationState, , updateLocationState] = useLocationState<{
+        page: number;
+    }>(key);
 
     const setPage = useCallback(
         (page: number) => {
-            navigateRef.current('', {
-                state: Object.assign({}, stateRef.current, { page }),
-            });
+            updateLocationState({ page });
         },
-        [navigateRef, stateRef]
+        [updateLocationState]
     );
 
     const pageFromParams = Number(searchParams.get('page'));
-    const pageFromState = state?.page;
+    const pageFromState = locationState?.page;
 
     useLayoutEffect(() => {
         if (pageFromParams) {
             searchParams.delete('page');
             setSearchParams(searchParams, {
                 replace: true,
-                state: Object.assign({}, state, { page: pageFromParams }),
             });
+            updateLocationState({ page: pageFromParams });
         }
-    }, [pageFromParams, state, setSearchParams, searchParams]);
+    }, [pageFromParams, setSearchParams, searchParams, updateLocationState]);
 
     const page = pageFromParams || pageFromState || 1;
-    return [page, setPage];
+    return [page, setPage] as const;
 }

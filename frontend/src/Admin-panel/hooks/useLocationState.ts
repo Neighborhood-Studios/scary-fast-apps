@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCallback, useRef } from 'react';
 
-export function useLocationState<T extends { key?: string }>(key?: string) {
+export function useLocationState<T extends {}>(key?: string) {
     const location = useLocation();
     const state = (location.state ?? {}) as T;
     const stateRef = useRef(state);
