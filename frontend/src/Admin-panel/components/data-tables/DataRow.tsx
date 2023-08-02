@@ -8,7 +8,7 @@ import {
     getFieldsForModel,
     pkDelimiter,
 } from '../../pages/DataTables/utils.ts';
-import { ReactComponent as EditSVG } from '../../images/actions/edit.svg';
+import { EditSVG, ViewSVG } from '../../images/actions';
 import { typeComponents } from './data-types/types.tsx';
 
 type DataRowProps = {
@@ -50,19 +50,19 @@ export const DataRow: FC<DataRowProps> = ({
                             disabled={isDeleting}
                         />
                     )}
-                    {canEdit && (
-                        <Link
-                            title="edit row"
-                            className="leading-[0px]"
-                            to={primaryKeys
-                                .map((pk) => rowData[pk])
-                                .join(pkDelimiter)}
-                        >
-                            <button className="hover:text-primary">
-                                <EditSVG />
-                            </button>
-                        </Link>
-                    )}
+
+                    <Link
+                        className="leading-[0px] hover:text-primary"
+                        to={primaryKeys
+                            .map((pk) => rowData[pk])
+                            .join(pkDelimiter)}
+                    >
+                        {canEdit ? (
+                            <EditSVG title="edit row" />
+                        ) : (
+                            <ViewSVG title="view row" />
+                        )}
+                    </Link>
                 </div>
             </td>
             {columns.map((colName) => (

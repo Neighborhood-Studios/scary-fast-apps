@@ -14,3 +14,4 @@ export { ReactComponent as OrderDESCSVG } from './icon-order-by-desc.svg';
 export { ReactComponent as CogSVG } from './icon-settings.svg';
 export { ReactComponent as SunSVG } from './icon-sun.svg';
 export { ReactComponent as SearchSVG } from './icon-search.svg';
+export { ReactComponent as BackSVG } from './icon-back.svg';

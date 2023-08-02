@@ -40,9 +40,16 @@ export enum ADMIN_ROTES {
     UI_ALERTS = 'ui/alerts',
     UI_BUTTONS = 'ui/buttons',
 }
+
+export const getTablesPath = () =>
+    generatePath([ADMIN_ROTES.ADMIN_ROOT, ADMIN_ROTES.DATA_TABLES].join('/'));
 export const getDataModelPath = (name: string) =>
     generatePath(
-        [ADMIN_ROTES.DATA_TABLES, ADMIN_ROTES.DATA_TABLE_DATA].join('/'),
+        [
+            ADMIN_ROTES.ADMIN_ROOT,
+            ADMIN_ROTES.DATA_TABLES,
+            ADMIN_ROTES.DATA_TABLE_DATA,
+        ].join('/'),
         { name }
     );
 export const getDataTableEditPath = (name: string, id: string | number) =>

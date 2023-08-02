@@ -6,7 +6,7 @@ import { useOutletContext } from 'react-router-dom';
 import { OutletContextType } from '../../pages/DataTables/DataTables.tsx';
 import { generateDeleteMutation } from '../../pages/DataTables/utils.ts';
 
-import { ReactComponent as DeleteSVG } from '../../images/actions/delete.svg';
+import { DeleteSVG } from '../../images/actions';
 
 type DeleteItemProps = {
     name: string;

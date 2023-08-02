@@ -65,7 +65,11 @@ const Header = (props: {
                         className="block flex-shrink-0 lg:hidden"
                         to={ADMIN_ROTES.ADMIN_ROOT}
                     >
-                        <img src={Logo} alt="Logo" />
+                        <img
+                            src={Logo}
+                            alt="Logo"
+                            className="h-8 w-8 object-contain rounded-md"
+                        />
                     </Link>
                 </div>
 

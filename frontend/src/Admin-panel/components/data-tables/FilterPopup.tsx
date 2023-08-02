@@ -13,7 +13,7 @@ import {
 } from '../../pages/DataTables/utils.ts';
 import { typeComponents } from './data-types/types.tsx';
 import { Select } from '../forms/Select.tsx';
-import { ReactComponent as DeleteSVG } from '../../images/actions/delete.svg';
+import { DeleteSVG } from '../../images/actions';
 import { CrossmarkSVG } from '../../images/icon';
 
 type FilterPopupProps = {
