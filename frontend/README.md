@@ -104,6 +104,18 @@ exports.onExecutePostLogin = async (event, api) => {
     },
   })};
 ```
+
+#### Add User Roles ####
+Add a user roles to Auth0 ID Token, so user roles will be available at client side.
+Also you can add other custom claims to ID Token
+Create a custom action for Login flow _"hasura sync users"_:
+```js
+exports.onExecutePostLogin = async (event, api) => {
+  if(event.request.hostname && event.authorization) {
+    api.idToken.setCustomClaim(event.request.hostname, { roles: event.authorization.roles });
+  }
+};
+```
 add to script secrets:
 - `dev_gql_admin_secret` and `staging_gql_admin_secret` -- admin secrets from Hasura
 - `dev_client_Id` and `staging_client_Id` -- Auth0 applications Client IDs related to development and staging instances 
