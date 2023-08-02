@@ -8,14 +8,14 @@ import SidebarLinkGroup from './SidebarLinkGroup.tsx';
 import { ADMIN_ROTES, getDataModelPath } from '../../routes.tsx';
 import { SidebarLinkItem } from './SidebarLinkItem.tsx';
 
-import { ReactComponent as ChartsSVG } from '../../images/sidebar/chart.svg';
+// import { ReactComponent as ChartsSVG } from '../../images/sidebar/chart.svg';
 import { ReactComponent as DashboardSVGSVG } from '../../images/sidebar/dashboard.svg';
 import { ReactComponent as TablesSVG } from '../../images/sidebar/tables.svg';
-import { ReactComponent as ElementsSVG } from '../../images/sidebar/elements.svg';
-import { ReactComponent as FormsSVG } from '../../images/sidebar/forms.svg';
-import { ReactComponent as ProfileSVG } from '../../images/sidebar/profile.svg';
+// import { ReactComponent as ElementsSVG } from '../../images/sidebar/elements.svg';
+// import { ReactComponent as FormsSVG } from '../../images/sidebar/forms.svg';
+// import { ReactComponent as ProfileSVG } from '../../images/sidebar/profile.svg';
 import { ReactComponent as SettingsSVG } from '../../images/sidebar/settings.svg';
-import { ReactComponent as CalendsrSVG } from '../../images/sidebar/calendsr.svg';
+// import { ReactComponent as CalendsrSVG } from '../../images/sidebar/calendsr.svg';
 
 interface SidebarProps {
     sidebarOpen: boolean;
@@ -163,6 +163,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             {/* <!-- Menu Item DataTables --> */}
 
                             {/* <!-- Menu Item Calendar --> */}
+                            {/*
                             <li>
                                 <SidebarLinkItem
                                     to={ADMIN_ROTES.CALENDAR}
@@ -171,9 +172,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                     Calendar
                                 </SidebarLinkItem>
                             </li>
+*/}
                             {/* <!-- Menu Item Calendar --> */}
 
                             {/* <!-- Menu Item Profile --> */}
+                            {/*
                             <li>
                                 <SidebarLinkItem
                                     to={ADMIN_ROTES.PROFILE}
@@ -182,9 +185,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                     Profile
                                 </SidebarLinkItem>
                             </li>
+*/}
                             {/* <!-- Menu Item Profile --> */}
 
                             {/* <!-- Menu Item Forms --> */}
+                            {/*
                             <SidebarLinkGroup
                                 activeCondition={pathname.includes('forms/')}
                                 menuItem={{
@@ -203,9 +208,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                     },
                                 ]}
                             />
+*/}
                             {/* <!-- Menu Item Forms --> */}
 
                             {/* <!-- Menu Item Tables --> */}
+                            {/*
                             <li>
                                 <SidebarLinkItem
                                     to={ADMIN_ROTES.TABLES}
@@ -214,9 +221,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                     Tables
                                 </SidebarLinkItem>
                             </li>
+*/}
                             {/* <!-- Menu Item Tables --> */}
 
                             {/* <!-- Menu Item Settings --> */}
+
                             <li>
                                 <SidebarLinkItem
                                     to={ADMIN_ROTES.SETTINGS}
@@ -225,18 +234,20 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                     Settings
                                 </SidebarLinkItem>
                             </li>
+
                             {/* <!-- Menu Item Settings --> */}
                         </ul>
                     </div>
 
                     {/* <!-- Others Group --> */}
+                    {/*
                     <div>
                         <h3 className="mb-4 ml-4 text-sm font-semibold text-bodydark2">
                             OTHERS
                         </h3>
 
                         <ul className="mb-6 flex flex-col gap-1.5">
-                            {/* <!-- Menu Item Chart --> */}
+                             <!-- Menu Item Chart -->
                             <li>
                                 <SidebarLinkItem
                                     to={ADMIN_ROTES.CHART}
@@ -245,9 +256,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                     Chart
                                 </SidebarLinkItem>
                             </li>
-                            {/* <!-- Menu Item Chart --> */}
+                             <!-- Menu Item Chart -->
 
-                            {/* <!-- Menu Item Ui Elements --> */}
+                             <!-- Menu Item Ui Elements -->
                             <SidebarLinkGroup
                                 activeCondition={pathname.includes(
                                     '/' + ADMIN_ROTES.UI
@@ -268,9 +279,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                                     },
                                 ]}
                             ></SidebarLinkGroup>
-                            {/* <!-- Menu Item Ui Elements --> */}
+                             <!-- Menu Item Ui Elements -->
                         </ul>
                     </div>
+*/}
                 </nav>
                 {/* <!-- Sidebar Menu --> */}
             </div>

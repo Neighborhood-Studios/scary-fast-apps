@@ -33,7 +33,8 @@ export const TableData: FC<TableDataProps> = () => {
                 {canInsert && (
                     <Link
                         to="new"
-                        className="ml-3 shrink-0 text-sm inline-flex items-center justify-center rounded-full bg-primary py-1 px-2 text-center font-medium text-white hover:bg-opacity-90 lg:px-1 xl:px-2"
+                        className="ml-3 shrink-0 text-sm inline-flex items-center justify-center rounded-full bg-primary text-center font-medium text-white hover:bg-opacity-90
+                         py-1 px-2.5"
                     >
                         + Add Item
                     </Link>

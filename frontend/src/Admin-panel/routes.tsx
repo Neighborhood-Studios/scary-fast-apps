@@ -3,12 +3,13 @@ import { generatePath } from 'react-router-dom';
 //
 import { lazy, Suspense } from 'react';
 //
-import ECommerce from './pages/Dashboard/ECommerce.tsx';
 import Loader from './common/Loader';
 import { TableData, TableDataItem, TablesList } from './pages/DataTables';
 import { TableDataNew } from './pages/DataTables/TableDataNew.tsx';
 import { admitRoot } from '../constants.ts';
+import { EmptyDashboard } from './pages/Dashboard/EmptyDashboard.tsx';
 
+const ECommerce = lazy(() => import('./pages/Dashboard/ECommerce.tsx'));
 const Calendar = lazy(() => import('./pages/Calendar.tsx'));
 const Chart = lazy(() => import('./pages/Chart.tsx'));
 const FormElements = lazy(() => import('./pages/Form/FormElements.tsx'));
@@ -22,6 +23,7 @@ const DataModels = lazy(() => import('./pages/DataTables'));
 
 export enum ADMIN_ROTES {
     ADMIN_ROOT = admitRoot,
+    ECOMMERCE = 'ecommerce',
     CALENDAR = 'calendar',
     DATA_TABLES = 'data-tables',
     DATA_TABLE_DATA = ':name',
@@ -53,7 +55,15 @@ export const getDataTableEditPath = (name: string, id: string | number) =>
         { name, id }
     );
 export const routes: RouteObject[] = [
-    { index: true, element: <ECommerce /> },
+    { index: true, element: <EmptyDashboard /> },
+    {
+        path: ADMIN_ROTES.ECOMMERCE,
+        element: (
+            <Suspense fallback={<Loader />}>
+                <ECommerce />
+            </Suspense>
+        ),
+    },
     {
         path: ADMIN_ROTES.CALENDAR,
         element: (

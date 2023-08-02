@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import Logo from '../images/logo/logo-icon.svg';
+import Logo from 'assets/neighborhood-studios.png';
+
 import DarkModeSwitcher from './DarkModeSwitcher.tsx';
-import DropdownMessage from './forms/DropdownMessage.tsx';
-import DropdownNotification from './forms/DropdownNotification.tsx';
+// import DropdownMessage from './forms/DropdownMessage.tsx';
+// import DropdownNotification from './forms/DropdownNotification.tsx';
 import DropdownUser from './forms/DropdownUser.tsx';
 import { ADMIN_ROTES } from '../routes.tsx';
 
@@ -68,6 +69,7 @@ const Header = (props: {
                     </Link>
                 </div>
 
+                {/*
                 <div className="hidden sm:block">
                     <form
                         action="https://formbold.com/s/unique_form_id"
@@ -106,19 +108,24 @@ const Header = (props: {
                         </div>
                     </form>
                 </div>
+*/}
 
-                <div className="flex items-center gap-3 2xsm:gap-7">
+                <div className="ml-auto flex items-center gap-3 2xsm:gap-7">
                     <ul className="flex items-center gap-2 2xsm:gap-4">
                         {/* <!-- Dark Mode Toggler --> */}
                         <DarkModeSwitcher />
                         {/* <!-- Dark Mode Toggler --> */}
 
                         {/* <!-- Notification Menu Area --> */}
+                        {/*
                         <DropdownNotification />
+*/}
                         {/* <!-- Notification Menu Area --> */}
 
                         {/* <!-- Chat Notification Area --> */}
+                        {/*
                         <DropdownMessage />
+*/}
                         {/* <!-- Chat Notification Area --> */}
                     </ul>
 

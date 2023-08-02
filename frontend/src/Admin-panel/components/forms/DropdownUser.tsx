@@ -4,6 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 import { getAbsoluteRouteURL, ROUTES } from 'routes.tsx';
 import { getUserRoles } from 'Services/auth/utils.ts';
+import { ADMIN_ROTES } from '../../routes.tsx';
 
 const DropdownUser = () => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -88,9 +89,10 @@ const DropdownUser = () => {
                 }`}
             >
                 <ul className="flex flex-col gap-5 border-b border-stroke px-6 py-7.5 dark:border-strokedark">
+                    {/*
                     <li>
                         <Link
-                            to="/profile"
+                            to={ADMIN_ROTES.PROFILE}
                             className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
                         >
                             <svg
@@ -113,6 +115,8 @@ const DropdownUser = () => {
                             My Profile
                         </Link>
                     </li>
+*/}
+                    {/*
                     <li>
                         <Link
                             to="#"
@@ -134,9 +138,10 @@ const DropdownUser = () => {
                             My Contacts
                         </Link>
                     </li>
+*/}
                     <li>
                         <Link
-                            to="/settings"
+                            to={ADMIN_ROTES.SETTINGS}
                             className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
                         >
                             <svg
