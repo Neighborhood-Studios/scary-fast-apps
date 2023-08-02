@@ -15,3 +15,7 @@ export { ReactComponent as CogSVG } from './icon-settings.svg';
 export { ReactComponent as SunSVG } from './icon-sun.svg';
 export { ReactComponent as SearchSVG } from './icon-search.svg';
 export { ReactComponent as BackSVG } from './icon-back.svg';
+export { ReactComponent as PersonSVG } from './icon-person.svg';
+export { ReactComponent as EmailSVG } from './icon-email.svg';
+export { ReactComponent as UploadSVG } from './icon-upload.svg';
+export { ReactComponent as EditSVG } from './icon-edit.svg';
