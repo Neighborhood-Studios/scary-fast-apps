@@ -7,6 +7,7 @@ redis==4.6.0
 boto3==1.28.3
 django-extensions==3.2.3
 requests==2.31.0
+django-add-default-value==0.10.0
 onesignal-python-api==2.0.0
 
 cryptography==41.0.2
