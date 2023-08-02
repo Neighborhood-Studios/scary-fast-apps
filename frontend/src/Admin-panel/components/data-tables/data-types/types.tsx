@@ -41,6 +41,12 @@ export enum Types {
     name = 'name',
 }
 export const stringTypes = [Types.String, Types.bpchar, Types.name] as string[];
+export const numberTypes = [
+    Types.Int,
+    Types.bigint,
+    Types.numeric,
+    Types.Float,
+] as string[];
 
 export function typeComponents(type: string | undefined): {
     ViewComponent: ComponentType<any>;

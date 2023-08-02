@@ -9,7 +9,11 @@ import type {
 import type { SchemaData } from './DataTables.tsx';
 import { IntrospectionInputValue } from 'graphql/utilities/getIntrospectionQuery';
 import { chain, isEmpty } from 'lodash';
-import { stringTypes } from '../../components/data-tables/data-types/types.tsx';
+import {
+    numberTypes,
+    stringTypes,
+    Types,
+} from '../../components/data-tables/data-types/types.tsx';
 
 export const pkDelimiter = '-=|=-';
 const insertMutationName = (name = '') => `insert_${name}_one`;
@@ -73,10 +77,10 @@ export function generateQueryForModel(
               .filter(([col]) => columns.includes(col))
               .map(([col, dir]) => `${col}:${dir}`)}}`;
 
-    const where = getWhereCondition(
+    const where = getWhereCondition([
         getSearchPart(schemaData, name, searchString),
-        getFilterPart(filterData)
-    );
+        getFilterPart(filterData),
+    ]);
 
     const queryArgs = [paginationArgs, orderByArgs, where].filter(Boolean);
 
@@ -104,14 +108,9 @@ export function generateQueryForModel(
         columns,
     };
 
-    function getWhereCondition(searchPart: string, filterPart: string) {
-        if (!searchPart && !filterPart) {
-            return '';
-        } else if (searchPart && filterPart) {
-            return `where:{_and:{${filterPart}, ${searchPart}}}`;
-        } else {
-            return `where:{${searchPart || filterPart}}`;
-        }
+    function getWhereCondition(conditions: string[]) {
+        conditions = conditions.filter(Boolean);
+        return conditions.length ? `where:{${conditions}}` : '';
     }
 }
 
@@ -441,9 +440,20 @@ export function getSearchPart(
         searchTerm &&
         chain(getFieldsForModel(schemaData, name))
             .values()
-            .filter(({ type }) => stringTypes.includes(type ?? ''))
-            .map(({ name }) => `${name}:{_iregex: "${searchTerm}"}`)
-            .thru((list) => `_or:{${list}}`)
+            .map(({ name, type = '' }) => {
+                if (stringTypes.includes(type)) {
+                    return `{${name}:{_iregex: "${searchTerm}"}}`;
+                }
+                if (numberTypes.includes(type) && !isNaN(+searchTerm)) {
+                    return `{${name}:{_eq: ${searchTerm}}}`;
+                }
+                if (type === Types.uuid && isUUID(searchTerm)) {
+                    return `{${name}:{_eq: "${searchTerm}"}}`;
+                }
+                return '';
+            })
+            .filter(Boolean)
+            .thru((list) => `_or:[${list}]`)
             .value()
     );
 }
@@ -461,11 +471,16 @@ export function getFilterPart(filterData: FilterItemData[]): string {
                           }`
                   )
               )
-              .transform(
+              .transform<string[]>(
                   (filterItems, ops, field) =>
-                      filterItems.push(`${field}:{${ops}}`),
-                  [] as string[]
+                      filterItems.push(`{${field}:{${ops}}}`),
+                  []
               )
-              .thru((list) => `_and:{${list}}`)
+              .thru((list) => `_and:[${list}]`)
               .value();
 }
+
+export const isUUID = (string: string) =>
+    /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/.test(
+        string
+    );
