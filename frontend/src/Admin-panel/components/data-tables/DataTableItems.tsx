@@ -220,7 +220,7 @@ export const TableItems: FC<{
                                             className="p-5 text-center text-xl"
                                             colSpan={1 + enabledColumns.length}
                                         >
-                                            <div className="absolute -left-1/2 -translate-x-1/2 -translate-y-1/2">
+                                            <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2">
                                                 no data
                                             </div>
                                         </td>
