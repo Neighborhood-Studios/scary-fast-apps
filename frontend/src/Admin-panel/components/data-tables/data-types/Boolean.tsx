@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { useId } from 'react';
 
 import { InputProps } from '../../forms/Inputs.tsx';
-import { ReactComponent as CheckmarkSVG } from '../../../images/icon/icon-checked.svg';
+import { CheckmarkSVG } from '../../../images/icon';
 import { FormInputComponent } from '../FormInputComponent.tsx';
 import { Select } from '../../forms/Select.tsx';
 

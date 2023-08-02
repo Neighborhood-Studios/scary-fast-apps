@@ -3,7 +3,7 @@
 import React, { MouseEventHandler, PropsWithChildren, useMemo } from 'react';
 import { Link, Path } from 'react-router-dom';
 
-import { ReactComponent as ArDown } from '../../images/icon/icon-arrow-down.svg';
+import { ArDownSVG } from '../../images/icon';
 // import { toQuerySearchString } from 'Helpers/utils';
 
 import {
@@ -64,7 +64,7 @@ const Paginator: React.FC<Props> = ({
                 className={'h-fit'}
             >
                 <PaginationControl>
-                    <ArDown style={{ transform: 'rotate(90deg)' }} />
+                    <ArDownSVG style={{ transform: 'rotate(90deg)' }} />
                 </PaginationControl>
             </PageItem>
 
@@ -93,7 +93,7 @@ const Paginator: React.FC<Props> = ({
                 className={'h-fit'}
             >
                 <PaginationControl>
-                    <ArDown style={{ transform: 'rotate(-90deg)' }} />
+                    <ArDownSVG style={{ transform: 'rotate(-90deg)' }} />
                 </PaginationControl>
             </PageItem>
         </PaginationWrapper>

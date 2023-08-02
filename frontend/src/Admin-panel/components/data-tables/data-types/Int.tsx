@@ -9,11 +9,13 @@ export const IntEdit: FC<InputProps> = (props) => (
         {...props}
         type="number"
         placeholder="integer value"
-        onInput={(e) => {
-            const value = e.currentTarget.value;
-            if (value === '' || /^-?\d+$/.test(value)) {
-                const intValue = value === '' ? null : Number(value);
-                props.change?.(intValue);
+        step={1}
+        onInput={({ currentTarget: { value } }) => {
+            const intValue = parseInt(value);
+            if (!isNaN(intValue)) {
+                props.change(intValue);
+            } else {
+                props.change(value || null);
             }
         }}
     />

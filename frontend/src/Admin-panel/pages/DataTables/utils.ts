@@ -8,7 +8,8 @@ import type {
 } from 'graphql/utilities';
 import type { SchemaData } from './DataTables.tsx';
 import { IntrospectionInputValue } from 'graphql/utilities/getIntrospectionQuery';
-import { isEmpty } from 'lodash';
+import { chain, isEmpty } from 'lodash';
+import { stringTypes } from '../../components/data-tables/data-types/types.tsx';
 
 export const pkDelimiter = '-=|=-';
 const insertMutationName = (name = '') => `insert_${name}_one`;
@@ -35,6 +36,8 @@ export function generateQueryForModel(
     schemaData: SchemaData,
     name = '',
     orderBy: Record<string, string>,
+    filterData: FilterItemData[],
+    searchString: string | undefined,
     withPagination?: boolean
 ) {
     const model = schemaData.typesMap[name] as IntrospectionObjectType;
@@ -57,17 +60,9 @@ export function generateQueryForModel(
 
     withPagination = (withPagination && !!aggregationName) ?? !!aggregationName;
 
-    const countQuery =
-        aggregationName && withPagination
-            ? `${aggregationName} {
-            aggregate {
-                count
-            }
-        }`
-            : '';
     let paginationVars = '';
     let paginationArgs = '';
-    if (countQuery) {
+    if (withPagination) {
         paginationVars = `($limit: Int, $offset: Int)`;
         paginationArgs = `limit: $limit, offset: $offset`;
     }
@@ -78,7 +73,21 @@ export function generateQueryForModel(
               .filter(([col]) => columns.includes(col))
               .map(([col, dir]) => `${col}:${dir}`)}}`;
 
-    const queryArgs = [paginationArgs, orderByArgs].filter(Boolean);
+    const where = getWhereCondition(
+        getSearchPart(schemaData, name, searchString),
+        getFilterPart(filterData)
+    );
+
+    const queryArgs = [paginationArgs, orderByArgs, where].filter(Boolean);
+
+    const countQuery = withPagination
+        ? `${aggregationName} ${where ? `(${where})` : ''} {
+            aggregate {
+                count
+            }
+        }`
+        : '';
+
     const queryString = `
         query ${name}DataQuery ${paginationVars} {
             ${queryName} ${queryArgs.length ? `(${queryArgs})` : ''} {
@@ -94,6 +103,16 @@ export function generateQueryForModel(
         aggregationQueryName: aggregationName,
         columns,
     };
+
+    function getWhereCondition(searchPart: string, filterPart: string) {
+        if (!searchPart && !filterPart) {
+            return '';
+        } else if (searchPart && filterPart) {
+            return `where:{_and:{${filterPart}, ${searchPart}}}`;
+        } else {
+            return `where:{${searchPart || filterPart}}`;
+        }
+    }
 }
 
 export function generateQueryByPk(
@@ -401,7 +420,7 @@ export function getCanInsert(schemaData: SchemaData, name = '') {
     );
 }
 
-function getTypeName(
+export function getTypeName(
     objectType?: IntrospectionInputValue | IntrospectionField
 ) {
     let type = objectType?.type ?? null;
@@ -411,4 +430,42 @@ function getTypeName(
         type = 'ofType' in type ? type.ofType : null;
     }
     return typeName || '';
+}
+
+export function getSearchPart(
+    schemaData: SchemaData,
+    name = '',
+    searchTerm = ''
+) {
+    return (
+        searchTerm &&
+        chain(getFieldsForModel(schemaData, name))
+            .values()
+            .filter(({ type }) => stringTypes.includes(type ?? ''))
+            .map(({ name }) => `${name}:{_iregex: "${searchTerm}"}`)
+            .thru((list) => `_or:{${list}}`)
+            .value()
+    );
+}
+
+export function getFilterPart(filterData: FilterItemData[]): string {
+    return isEmpty(filterData)
+        ? ''
+        : chain(filterData)
+              .groupBy('field')
+              .mapValues((filter) =>
+                  filter.map(
+                      ({ value, operator }) =>
+                          `${operator}: ${
+                              typeof value === 'string' ? `"${value}"` : value
+                          }`
+                  )
+              )
+              .transform(
+                  (filterItems, ops, field) =>
+                      filterItems.push(`${field}:{${ops}}`),
+                  [] as string[]
+              )
+              .thru((list) => `_and:{${list}}`)
+              .value();
 }

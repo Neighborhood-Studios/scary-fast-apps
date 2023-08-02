@@ -20,6 +20,10 @@ export const Dropdown: FC<DropdownProps> = ({
 }) => {
     const [dropdownOpen, setDropdownOpen] = useState(!!initialState);
 
+    useEffect(() => {
+        setDropdownOpen(!!initialState);
+    }, [initialState]);
+
     const triggerRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(dropDownRef?.current ?? null);
 
@@ -35,8 +39,8 @@ export const Dropdown: FC<DropdownProps> = ({
                 return;
             setDropdownOpen(false);
         };
-        document.addEventListener('click', clickHandler);
-        return () => document.removeEventListener('click', clickHandler);
+        document.addEventListener('click', clickHandler, true);
+        return () => document.removeEventListener('click', clickHandler, true);
     });
 
     // close if the esc key is pressed

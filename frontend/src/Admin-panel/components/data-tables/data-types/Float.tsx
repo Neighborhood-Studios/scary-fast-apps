@@ -9,11 +9,13 @@ export const FloatEdit: FC<InputProps> = (props) => (
         {...props}
         type="number"
         placeholder="float value"
-        onInput={(e) => {
-            const value = e.currentTarget.value;
-            if (value === '' || /^-?\d+\.?\d+?$/.test(value)) {
-                const intValue = value === '' ? null : Number(value);
-                props.change?.(intValue);
+        step="any"
+        onInput={({ currentTarget: { value } }) => {
+            const floatValue = parseFloat(value);
+            if (!isNaN(floatValue)) {
+                props.change(floatValue);
+            } else {
+                props.change(value || null);
             }
         }}
     />

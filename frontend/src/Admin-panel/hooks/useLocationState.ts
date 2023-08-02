@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCallback, useRef } from 'react';
 
-export function useLocationState<T extends {}>(key?: string) {
+export function useLocationState<T extends object>(key?: string) {
     const location = useLocation();
     const state = (location.state ?? {}) as T;
     const stateRef = useRef(state);
@@ -25,7 +25,7 @@ export function useLocationState<T extends {}>(key?: string) {
         [stateRef, navigateRef, key]
     );
     const updateState = useCallback(
-        (state: T) => {
+        (state: Partial<T>) => {
             const updatedState = Object.assign({}, stateRef.current, state);
             navigateRef.current('', {
                 state: key ? { ...updatedState, key } : updatedState,

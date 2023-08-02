@@ -1,6 +1,6 @@
 import { ReactElement, useState } from 'react';
 import { SidebarLinkItem } from './SidebarLinkItem.tsx';
-import { ReactComponent as DropdownSVGSVG } from '../../images/icon/icon-dropdown.svg';
+import { DropdownSVGSVG } from '../../images/icon';
 import { NavLink } from 'react-router-dom';
 
 interface SidebarLinkGroupProps {

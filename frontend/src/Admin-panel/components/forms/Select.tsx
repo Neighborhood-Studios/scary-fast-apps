@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useLayoutEffect } from 'react';
 
 type SelectProps = {
     value: string | boolean | number | null | undefined | readonly string[];
@@ -18,10 +19,26 @@ export const Select: FC<SelectProps> = ({
     disabled,
     required,
 }) => {
+    if (!required) {
+        options = [{ value: String(null), label: '' }].concat(options);
+    }
+    useLayoutEffect(() => {
+        if (
+            options.length &&
+            (value === undefined ||
+                !options.find(
+                    ({ value: optionValue }) =>
+                        String(optionValue) === String(value)
+                ))
+        ) {
+            const firstValue = options[0].value;
+            onSelect?.(firstValue === 'null' ? null : firstValue);
+        }
+    });
     return (
         <div className="relative z-20 bg-white dark:bg-form-input">
             <select
-                className="relative z-20 w-full appearance-none rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input"
+                className="w-full appearance-none rounded border border-stroke bg-transparent py-3 px-5 pr-8 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input"
                 id={id}
                 name={name}
                 required={required}
@@ -31,14 +48,13 @@ export const Select: FC<SelectProps> = ({
                     onSelect(value === 'null' ? null : value)
                 }
             >
-                {!required && <option value="null">{''}</option>}
                 {options.map(({ label, value }) => (
                     <option key={value} value={value}>
                         {label}
                     </option>
                 ))}
             </select>
-            <span className="absolute top-1/2 right-4 z-10 -translate-y-1/2">
+            <span className="absolute top-1/2 right-1.5 z-10 -translate-y-1/2">
                 <svg
                     width="24"
                     height="24"

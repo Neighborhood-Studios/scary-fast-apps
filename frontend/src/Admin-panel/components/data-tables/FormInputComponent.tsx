@@ -15,20 +15,22 @@ export const FormInputComponent: FC<FormInputComponentProps> = ({
 }) => {
     return (
         <div>
-            <div className={description ? 'mb-1.5' : 'mb-3'}>
-                <label
-                    className="block text-black dark:text-white"
-                    htmlFor={inputId}
-                >
-                    {label}
-                    {required && <span className="text-meta-1">*</span>}
-                </label>
-                {description && (
-                    <span className="relative top-[-0.5em] text-sm">
-                        {description}
-                    </span>
-                )}
-            </div>
+            {label && (
+                <div className={description ? 'mb-1.5' : 'mb-3'}>
+                    <label
+                        className="block text-black dark:text-white"
+                        htmlFor={inputId}
+                    >
+                        {label}
+                        {required && <span className="text-meta-1">*</span>}
+                    </label>
+                    {description && (
+                        <span className="relative top-[-0.5em] text-sm">
+                            {description}
+                        </span>
+                    )}
+                </div>
+            )}
             {children}
         </div>
     );
