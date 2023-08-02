@@ -7,13 +7,13 @@ redis==4.6.0
 boto3==1.28.3
 django-extensions==3.2.3
 requests==2.31.0
-
+onesignal-python-api==2.0.0
 
 cryptography==41.0.2
 djangorestframework==3.14.0
 django-cors-headers==4.2.0
 drf-jwt==1.19.2
-pyjwt==2.7.0
+pyjwt==2.8.0
 
 prometheus-client==0.17.1
 sqlparse==0.4.4

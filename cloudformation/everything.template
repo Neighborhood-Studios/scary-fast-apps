@@ -122,6 +122,21 @@ Parameters:
     Description: 'The haasura console should have an access key for basic security.'
     Type: String
 
+  OneSignalAppId:
+    Description: 'App ID for OneSignal integration'
+    Type: String
+    Default: ''
+
+  OneSignalApiKey:
+    Description: 'API key for OneSignal integration'
+    Type: String
+    Default: ''
+
+  OneSignalTwilioFromNumber:
+    Description: 'Twilio phone number used for outgoing sms, must be linked to onesignal account'
+    Type: String
+    Default: ''
+
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: VPC that has access to the postgres db
@@ -554,6 +569,12 @@ Resources:
               Value: !Ref a0ManagementClientId
             - Name: 'API_DOMAIN_NAME'
               Value: !Ref ApiFullDomainName
+            - Name: 'ONESIGNAL_APP_ID'
+              Value: !Ref OneSignalAppId
+            - Name: 'ONESIGNAL_API_KEY'
+              Value: !Ref OneSignalApiKey
+            - Name: 'ONESIGNAL_TWILIO_FROM_NUMBER'
+              Value: !Ref OneSignalTwilioFromNumber
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -628,6 +649,12 @@ Resources:
               Value: !Ref a0ManagementClientId
             - Name: 'API_DOMAIN_NAME'
               Value: !Ref ApiFullDomainName
+            - Name: 'ONESIGNAL_APP_ID'
+              Value: !Ref OneSignalAppId
+            - Name: 'ONESIGNAL_API_KEY'
+              Value: !Ref OneSignalApiKey
+            - Name: 'ONESIGNAL_TWILIO_FROM_NUMBER'
+              Value: !Ref OneSignalTwilioFromNumber
           LogConfiguration:
             LogDriver: awslogs
             Options:

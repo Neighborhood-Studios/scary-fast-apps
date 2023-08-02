@@ -35,11 +35,20 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.RemoteUserBackend',
 ]
 
+# auth0
 AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")  # 'dev-jnso8xn6b1daq18g.us.auth0.com'
 AUTH0_API_IDENTIFIER = os.getenv("AUTH0_API_IDENTIFIER")  # 'https://api-staging.sfaconstruction.net'
 
 AUTH0_MANAGEMENT_CLIENT_SECRET = os.getenv("AUTH0_MANAGEMENT_CLIENT_SECRET")
 AUTH0_MANAGEMENT_CLIENT_ID = os.getenv("AUTH0_MANAGEMENT_CLIENT_ID")
+
+# onesignal
+ONESIGNAL_API_KEY = os.getenv("ONESIGNAL_API_KEY")
+ONESIGNAL_APP_ID = os.getenv("ONESIGNAL_APP_ID")
+
+# see https://documentation.onesignal.com/docs/twilio-setup
+ONESIGNAL_TWILIO_FROM_NUMBER = os.getenv("ONESIGNAL_TWILIO_FROM_NUMBER")
+
 # Application definition
 
 INSTALLED_APPS = [
