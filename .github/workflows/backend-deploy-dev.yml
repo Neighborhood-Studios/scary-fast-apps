@@ -2,7 +2,7 @@ name: "Backend Dev Deploy"
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ dev, s3_storage ]
     paths:
       - 'backend/**/*'
       - '.github/**/*'
