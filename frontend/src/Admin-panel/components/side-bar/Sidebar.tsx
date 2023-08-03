@@ -16,7 +16,7 @@ import { ReactComponent as TablesSVG } from '../../images/sidebar/tables.svg';
 // import { ReactComponent as ProfileSVG } from '../../images/sidebar/profile.svg';
 import { ReactComponent as SettingsSVG } from '../../images/sidebar/settings.svg';
 import { BackSVG } from 'Admin-panel/images/icon/index.ts';
-// import { ReactComponent as CalendsrSVG } from '../../images/sidebar/calendsr.svg';
+// import { ReactComponent as CalendarSVG } from '../../images/sidebar/Calendar.svg';
 
 interface SidebarProps {
     sidebarOpen: boolean;
@@ -57,8 +57,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
     // close if the esc key is pressed
     useEffect(() => {
-        const keyHandler = ({ keyCode }: KeyboardEvent) => {
-            if (!sidebarOpen || keyCode !== 27) return;
+        const keyHandler = ({ key }: KeyboardEvent) => {
+            if (!sidebarOpen || key !== 'Escape') return;
             setSidebarOpen(false);
         };
         document.addEventListener('keydown', keyHandler);
@@ -166,7 +166,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                             <li>
                                 <SidebarLinkItem
                                     to={ADMIN_ROTES.CALENDAR}
-                                    icon={<CalendsrSVG />}
+                                    icon={<CalendarSVG />}
                                 >
                                     Calendar
                                 </SidebarLinkItem>
