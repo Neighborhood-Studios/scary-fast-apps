@@ -33,6 +33,8 @@ import { OrderASCSVG } from '../../images/icon';
 import { OrderDESCSVG } from '../../images/icon';
 import { FilterSVG } from '../../images/icon';
 import { FilterActiveSVG } from '../../images/icon';
+import { showToast } from '../../utils.ts';
+import { ErrorMsg } from '../alerts/ErrorMsg.tsx';
 
 const ORDER_DIR = ['asc', 'desc'] as const;
 type OrderDirType = (typeof ORDER_DIR)[number];
@@ -86,9 +88,16 @@ export const TableItems: FC<{
         if (page) {
             request({
                 variables: { limit: pageSize, offset: (page - 1) * pageSize },
+            }).catch((error) => {
+                showToast(
+                    tableName,
+                    <ErrorMsg title="Request Error">{error.message}</ErrorMsg>,
+                    'error',
+                    false
+                );
             });
         }
-    }, [page, pageSize, request]);
+    }, [tableName, page, pageSize, request]);
 
     useEffect(() => {
         if (data?.[queryName]) {

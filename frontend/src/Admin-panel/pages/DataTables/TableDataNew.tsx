@@ -9,17 +9,19 @@ import { FieldEditComponent } from '../../components/data-tables/UpdateForm.tsx'
 import Breadcrumb from '../../components/Breadcrumb.tsx';
 import { startCase } from 'lodash';
 import { getDataModelPath, getTablesPath } from '../../routes.tsx';
+import { showToast } from '../../utils.ts';
+import { SuccessMsg } from '../../components/alerts/SuccessMsg.tsx';
 
 type TableDataNewProps = object;
 export const TableDataNew: FC<TableDataNewProps> = () => {
     const schemaData = useOutletContext<OutletContextType>();
     const { name } = useParams<{ name: string }>();
-
+    const toastId = name ?? '';
     const { mutationString, /* mutationName,*/ inputFields } =
         generateInsertMutation(schemaData, name || '');
 
     const query = useMemo(() => gql(mutationString), [mutationString]);
-    const [insert, { loading, error }] = useMutation(query);
+    const [insert, { loading }] = useMutation(query);
 
     const modelFields = getFieldsForModel(schemaData, name || '');
 
@@ -34,8 +36,20 @@ export const TableDataNew: FC<TableDataNewProps> = () => {
         insert({ variables: values })
             .then(() => {
                 form.reset();
+                showToast(
+                    toastId,
+                    <SuccessMsg title="Successfully Created"></SuccessMsg>,
+                    'success'
+                );
             })
-            .catch(console.warn.bind(console, 'gql error'));
+            .catch((error) => {
+                showToast(
+                    toastId,
+                    <ErrorMsg title="Create Error">{error.message}</ErrorMsg>,
+                    'error',
+                    false
+                );
+            });
     };
 
     return (
@@ -77,12 +91,6 @@ export const TableDataNew: FC<TableDataNewProps> = () => {
                                     )
                                 )}
                             </fieldset>
-
-                            {error && (
-                                <ErrorMsg title=" There was error with your submission">
-                                    {error.message}
-                                </ErrorMsg>
-                            )}
 
                             <button
                                 className="flex w-full justify-center rounded bg-primary p-3 mt-4.5 font-medium text-gray disabled:opacity-50"

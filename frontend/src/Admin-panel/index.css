@@ -161,3 +161,26 @@ span.flatpickr-weekday,
 [x-cloak] {
   display: none !important;
 }
+
+.Toastify__toast-container{
+  width: auto;
+  min-width: 400px;
+  max-width: 70vw;
+}
+
+.Toastify__toast {
+  padding: 0;
+}
+.Toastify__toast-theme--light{
+  color: inherit;
+}
+.Toastify__toast-body {
+  padding: 0;
+}
+
+.Toastify__close-button {
+  color: inherit;
+  position: absolute;
+  top: 0.38em;
+  right: 0.38em;
+}

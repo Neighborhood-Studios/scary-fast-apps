@@ -14,6 +14,7 @@ import { OutletContextType } from '../../pages/DataTables/DataTables.tsx';
 import { ErrorMsg } from '../alerts/ErrorMsg.tsx';
 import { SuccessMsg } from '../alerts/SuccessMsg.tsx';
 import { typeComponents } from './data-types/types.tsx';
+import { showToast } from '../../utils.ts';
 
 type UpdateFormProps = {
     tableName: string;
@@ -25,14 +26,14 @@ export const UpdateForm: FC<UpdateFormProps> = ({ tableName, initialData }) => {
     const [values, setValues] = useState<Record<string, string | number>>({
         ...initialData,
     });
+    const toastId = tableName;
 
     const { mutationString, mutationName, pksFields, setFields } =
         generateUpdateMutation(schemaData, tableName);
 
     const pkKeys = pksFields.map(({ name }) => name);
     const mutation = useMemo(() => gql(mutationString), [mutationString]);
-    const [update, { data: resultData, loading, error }] =
-        useMutation(mutation);
+    const [update, { loading }] = useMutation(mutation);
 
     const modelFields = getFieldsForModel(schemaData, tableName);
     const selectableColumns = getSelectableFields(schemaData, tableName);
@@ -51,11 +52,24 @@ export const UpdateForm: FC<UpdateFormProps> = ({ tableName, initialData }) => {
         setFields.forEach(({ name, varName }) =>
             Object.assign(variables, { [varName]: values[name] ?? data[name] })
         );
-        update({ variables }).then(({ data }) => {
-            setData(data[mutationName]);
-        });
+        update({ variables })
+            .then(({ data }) => {
+                setData(data[mutationName]);
+                showToast(
+                    toastId,
+                    <SuccessMsg title="Successfully Updated"></SuccessMsg>,
+                    'success'
+                );
+            })
+            .catch((error) => {
+                showToast(
+                    toastId,
+                    <ErrorMsg title="Update Error">{error.message}</ErrorMsg>,
+                    'error',
+                    false
+                );
+            });
     };
-
     return (
         <form action="" onSubmit={onSubmit}>
             <fieldset className="p-6.5 disabled:opacity-50" disabled={loading}>
@@ -71,8 +85,6 @@ export const UpdateForm: FC<UpdateFormProps> = ({ tableName, initialData }) => {
                     </div>
                 ))}
             </fieldset>
-            {error && <ErrorMsg title="Update Error">{error.message}</ErrorMsg>}
-            {resultData && <SuccessMsg title="Successful Update"></SuccessMsg>}
             <button
                 className="flex w-full justify-center rounded bg-primary p-3 mt-4.5 font-medium text-gray disabled:opacity-50"
                 disabled={loading}
