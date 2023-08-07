@@ -1,1 +1,3 @@
-- "!include public_users.yaml"
+- "!include public_storage_buckets.yaml"
+- "!include public_storage_files.yaml"
+- "!include public_users_user.yaml"
