@@ -45,7 +45,9 @@ const ApolloClientWithAuthProvider: FC<PropsWithChildren> = ({ children }) => {
 
     useEffect(
         () => () => {
-            client.resetStore();
+            client
+                .resetStore()
+                .catch(console.log.bind(console, 'apollo client reset error:'));
         },
         [client]
     );

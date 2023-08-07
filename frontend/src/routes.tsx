@@ -7,6 +7,8 @@ import { PlaidComponent } from 'Pages/PlaidComponent';
 import { UserProfile } from 'Pages/UserProfile';
 import { ManagerPage } from 'Pages/ManagerPage.tsx';
 import { AdminPanel } from 'Pages/AdminPanel.tsx';
+import { routes as adminRoutes } from 'Admin-panel/routes';
+import { admitRoot } from './constants.ts';
 
 export const baseURL = new URL(import.meta.env.BASE_URL, window.origin);
 export const getAbsoluteRouteURL = (route: string) =>
@@ -19,7 +21,7 @@ export enum ROUTES {
     PLAID = '/plaid',
     PROTECTED = '/user',
     MANAGER = '/manager',
-    ADMIN = '/admin',
+    ADMIN = admitRoot,
 }
 
 export const routes = [
@@ -48,7 +50,7 @@ export const routes = [
                 path: ROUTES.PROTECTED,
                 element: (
                     <ProtectedRoute
-                        component={() => (
+                        Component={() => (
                             <>
                                 <Outlet />
                                 <Navigate to="profile" replace />
@@ -68,9 +70,10 @@ export const routes = [
                 element: (
                     <ProtectedRoute
                         roles={['manager']}
-                        component={AdminPanel}
+                        Component={AdminPanel}
                     />
                 ),
+                children: adminRoutes,
             },
         ],
         errorElement: <div>an error has occurred</div>,
