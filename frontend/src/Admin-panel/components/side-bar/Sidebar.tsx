@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 
 import { pinnedTables } from 'Recoil/sidebar.ts';
-import Logo from 'assets/neighborhood-studios.png';
+import Logo from 'assets/logo.png';
 import SidebarLinkGroup from './SidebarLinkGroup.tsx';
 import { ADMIN_ROTES, getDataModelPath } from '../../routes.tsx';
 import { SidebarLinkItem } from './SidebarLinkItem.tsx';

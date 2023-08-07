@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import Logo from 'assets/neighborhood-studios.png';
+import Logo from 'assets/logo.png';
 
 import DarkModeSwitcher from './DarkModeSwitcher.tsx';
 // import DropdownMessage from './forms/DropdownMessage.tsx';
