@@ -19,11 +19,11 @@ class Buckets(BaseModel):
 
 class Files(BaseModel):
     id = models.UUIDField(primary_key=True)
-    bucket_id = models.ForeignKey(Buckets, on_delete=models.CASCADE, null=False)
+    bucket = models.ForeignKey(Buckets, on_delete=models.CASCADE, null=False)
     name = models.TextField(null=True)
     size = models.PositiveIntegerField(null=True)
     mime_type = models.TextField(null=True)
     etag = models.TextField(null=True)
 
     is_uploaded = models.BooleanField(default=False, null=True)
-    uploaded_by_user_id = models.ForeignKey(users.models.user.User, null=True, on_delete=models.CASCADE)
+    uploaded_by_user = models.ForeignKey(users.models.user.User, null=True, on_delete=models.CASCADE)
