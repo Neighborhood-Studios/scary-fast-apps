@@ -2,7 +2,11 @@
 /// <reference types="vite-plugin-svgr/client" />
 
 interface ImportMetaEnv {
+    readonly PACKAGE_VERSION: string;
+    readonly VITE_APP_ENVIRONMENT: string;
+
     readonly VITE_APP_HEAP_ID: string;
+    readonly VITE_APP_SENTRY_DSN: string;
     readonly VITE_APP_AUTH0_DOMAIN: string;
     readonly VITE_APP_AUTH0_CLIENT_ID: string;
     readonly VITE_APP_AUTH0_CALLBACK_URL: string;
