@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'django_app.apps.DjangoAppConfig',
     'core_utils.apps.CoreUtilsConfig',
     'users.apps.UsersConfig',
+    'storage.apps.StorageConfig',
 ]
 
 MIDDLEWARE = [

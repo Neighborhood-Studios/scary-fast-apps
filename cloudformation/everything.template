@@ -91,6 +91,11 @@ Parameters:
     Type: String
     Default: '232267884965.dkr.ecr.us-west-1.amazonaws.com/sfa/django-app-staging:latest'
 
+  StorageDockerImage:
+    Description: 'Name and tag of the Storage API Docker Image'
+    Type: String
+    Default: 'nhost/hasura-storage:0.3.6'
+
   HasuraContainerPort:
     # this can be hardcoded...
     Description: 'Hasura container exposes stuff over 8080. We need to tell this to the container definition.'
@@ -101,6 +106,11 @@ Parameters:
     Description: 'Django container exposes stuff over 8080. We need to tell this to the container definition.'
     Type: Number
     Default: 8080
+  StorageContainerPort:
+    # this can be hardcoded...
+    Description: 'Storage container exposes stuff over 8080. We need to tell this to the container definition.'
+    Type: Number
+    Default: 8000
 
   HasuraHealthCheckPath:
     Description: 'The Health check path. Hasura exposes /healthz as a health check path. Used on the LoadBalancing Target group.'
@@ -178,6 +188,71 @@ Conditions:
   IsEnvEmpty: !Equals [ "HasuraJWTSSecret", "" ]
 
 Resources:
+  ECSServiceNamespace:
+    Type: AWS::ServiceDiscovery::PrivateDnsNamespace
+    Properties:
+      Description: Internal DSN namespace
+      Name: !Ref APIName
+      Properties:
+        DnsProperties:
+          SOA:
+            TTL: 60
+      Vpc: !Ref 'VpcId'
+
+  HasuraSDService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Name: hasura-api
+      Description: Hasura internal DNS
+      DnsConfig:
+        DnsRecords:
+          - Type: A
+            TTL: 60
+          - Type: AAAA
+            TTL: 60
+        RoutingPolicy: WEIGHTED
+        # HC should not be needed as it is performed by the ALB already
+      #      HealthCheckConfig:
+      #        FailureThreshold: 3
+      #        ResourcePath: /healthz
+      #        Type: HTTP
+      NamespaceId: !Ref ECSServiceNamespace
+
+  DjangoSDService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Name: django-api
+      Description: Django internal DNS
+      DnsConfig:
+        DnsRecords:
+          - Type: A
+            TTL: 60
+          - Type: AAAA
+            TTL: 60
+        RoutingPolicy: WEIGHTED
+      #      HealthCheckConfig:
+      #        FailureThreshold: 3
+      #        ResourcePath: /healthz
+      #        Type: HTTP
+      NamespaceId: !Ref ECSServiceNamespace
+
+  StorageSDService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Name: storage-api
+      Description: Storage internal DNS
+      DnsConfig:
+        DnsRecords:
+          - Type: A
+            TTL: 60
+          - Type: AAAA
+            TTL: 60
+        RoutingPolicy: WEIGHTED
+      #      HealthCheckConfig:
+      #        FailureThreshold: 3
+      #        ResourcePath: /healthz
+      #        Type: HTTP
+      NamespaceId: !Ref ECSServiceNamespace
 
   LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -208,6 +283,15 @@ Resources:
       SecurityGroupIngress:
         - IpProtocol: 'tcp'
           SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+          FromPort: 8080
+          ToPort: 8080
+        - IpProtocol: 'tcp'
+          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+          FromPort: 8000
+          ToPort: 8000
+        - IpProtocol: 'tcp'
+          CidrIp: !Ref VpcCIDR
+          Description: Allow access to Hasura from intranet
           FromPort: 8080
           ToPort: 8080
       Tags:
@@ -273,7 +357,7 @@ Resources:
     Properties:
       ClusterName: !Join [ '-', [ !Ref APIName, Cluster ] ]
       ServiceConnectDefaults:
-        Namespace: !Ref APIName
+        Namespace: !GetAtt ECSServiceNamespace.Arn
 
   HasuraLogGroup:
     Type: AWS::Logs::LogGroup
@@ -345,6 +429,8 @@ Resources:
               Value: !Ref 'HasuraAdminSecret'
             - Name: 'HASURA_GRAPHQL_DEV_MODE'
               Value: 'true'
+            - Name: 'HASURA_GRAPHQL_UNAUTHORIZED_ROLE'
+              Value: 'guest'
             - Name: 'HASURA_GRAPHQL_METADATA_DEFAULTS'
               Value: "{\"backend_configs\":{\"dataconnector\":{\"athena\":{\"uri\":\"http://data-connector-agent:8081/api/v1/athena\"},\"mariadb\":{\"uri\":\"http://data-connector-agent:8081/api/v1/mariadb\"},\"mysql8\":{\"uri\":\"http://data-connector-agent:8081/api/v1/mysql\"},\"oracle\":{\"uri\":\"http://data-connector-agent:8081/api/v1/oracle\"},\"snowflake\":{\"uri\":\"http://data-connector-agent:8081/api/v1/snowflake\"}}}}"
             - !If
@@ -390,20 +476,15 @@ Resources:
           SecurityGroups:
             - !Ref 'EC2SecurityGroup'
       ServiceConnectConfiguration:
-        Enabled: true
-        #        LogConfiguration:
-        #          LogDriver: awslogs
-        #          Options:
-        #            awslogs-region: !Ref AWS::Region
-        #            awslogs-group: !Ref HasuraLogGroup
-        #            awslogs-stream-prefix: serviceConnect
-        Services:
-          - # DiscoveryName: String # by default portName.namespace, should be fine
-            # IngressPortOverride: Integer
-            PortName: "hasuraapp"
-            ClientAliases:
-              - Port: !Ref HasuraContainerPort
-
+        Enabled: false
+      ServiceRegistries:
+        - RegistryArn: !GetAtt HasuraSDService.Arn
+          ContainerName: !Join [ '-', [ !Ref APIName, hasura-container ] ]
+#          ContainerPort: !Ref HasuraContainerPort  # somehow port causes error
+      EnableECSManagedTags: true
+      DeploymentController:
+        Type: ECS
+      SchedulingStrategy: REPLICA
       LoadBalancers:
         - ContainerName: !Join [ '-', [ !Ref APIName, hasura-container ] ]
           ContainerPort: !Ref HasuraContainerPort
@@ -689,15 +770,11 @@ Resources:
       - DjangoTargetGroup
     Properties:
       Cluster: !Ref ECSCluster
-      CapacityProviderStrategy:
-        - CapacityProvider: FARGATE
-          Base: 0
-          Weight: 1
-      # TODO: add definition to cf
       TaskDefinition: !Ref DjangoAPITaskDefinition
       ServiceName: !Join [ '-', [ !Ref APIName, djangoApi ] ]
       SchedulingStrategy: REPLICA
       DesiredCount: 1
+      LaunchType: FARGATE
       LoadBalancers:
         - ContainerName: !Join [ '-', [ !Ref APIName, djangoApi-container ] ]
           ContainerPort: !Ref DjangoContainerPort
@@ -723,20 +800,10 @@ Resources:
         Type: ECS
       EnableECSManagedTags: true
       ServiceConnectConfiguration:
-        Enabled: true
-        #        LogConfiguration:
-        #          LogDriver: awslogs
-        #          Options:
-        #            awslogs-region: !Ref AWS::Region
-        #            awslogs-group: !Ref HasuraLogGroup
-        #            awslogs-stream-prefix: serviceConnect
-        Services:
-          - # DiscoveryName: String # by default portName.namespace, should be fine
-            # IngressPortOverride: Integer
-            PortName: "djangoapp"
-            ClientAliases:
-              - Port: !Ref DjangoContainerPort
-
+        Enabled: false
+      ServiceRegistries:
+        - RegistryArn: !GetAtt DjangoSDService.Arn
+          ContainerName: !Join [ '-', [ !Ref APIName, djangoApi-container ] ]
 
   DjangoDMTQECSService:
     Type: AWS::ECS::Service
@@ -746,14 +813,11 @@ Resources:
       - DjangoTargetGroup
     Properties:
       Cluster: !Ref ECSCluster
-      CapacityProviderStrategy:
-        - CapacityProvider: FARGATE
-          Base: 0
-          Weight: 1
       TaskDefinition: !Ref DjangoDMTQTaskDefinition
       ServiceName: !Join [ '-', [ !Ref APIName, djangoDMTQ ] ]
       SchedulingStrategy: REPLICA
       DesiredCount: 1
+      LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
           # change to DISABLED if you're using private subnets that have access to a NAT gateway
@@ -774,7 +838,7 @@ Resources:
         Type: ECS
       EnableECSManagedTags: true
       ServiceConnectConfiguration:
-        Enabled: true
+        Enabled: false
 
   # punch SG to allow access to RDS from ECS
   SecurityGroupRDSIngress:
@@ -946,6 +1010,211 @@ Resources:
           AliasTarget:
             HostedZoneId: !GetAtt AppLoadBalancer.CanonicalHostedZoneID
             DNSName: !GetAtt AppLoadBalancer.DNSName
+
+  StorageS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        'Fn::Transform':
+          Name: 'String'
+          Parameters:
+            InputString: !Sub 'storage-private-${APIName}'
+            Operation: Lower
+
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Suspended
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - BucketKeyEnabled: True
+            ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'AES256'
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+    DeletionPolicy: Delete
+
+  StorageAPILogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [ '', [ /ecs/, !Ref APIName, StorageAPITaskDefinition ] ]
+
+  StorageAPITaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    # Makes sure the log group is created before it is used.
+    DependsOn: StorageAPILogGroup
+    Properties:
+      # Name of the task definition. Subsequent versions of the task definition are grouped together under this name.
+      Family: !Join [ '-', [ !Ref APIName, StorageAPITaskDef ] ]
+      # awsvpc is required for Fargate
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      # 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
+      # 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
+      # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
+      # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
+      # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
+      Cpu: 256  # should be more than enough for a io based service
+      # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
+      # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
+      # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
+      # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
+      # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
+      Memory: 0.5GB
+      # A role needed by ECS.
+      # "The ARN of the task execution role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role."
+      # "There is an optional task execution IAM role that you can specify with Fargate to allow your Fargate tasks to make API calls to Amazon ECR."
+      ExecutionRoleArn: !Ref ECSExecutionRole
+      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that grants containers in the task permission to call AWS APIs on your behalf."
+      TaskRoleArn: !Ref ECSTaskRole
+      ContainerDefinitions:
+        - Name: !Join [ '-', [ !Ref APIName, storageApi-container ] ]
+          Image: !Ref StorageDockerImage
+          Command:
+            - "serve"
+          PortMappings:
+            - ContainerPort: !Ref StorageContainerPort
+              Name: storageapi
+              AppProtocol: http
+          # Send logs to CloudWatch Logs
+          Environment:
+            - Name: 'BIND'
+              Value: !Join [ '', [ ":", !Ref StorageContainerPort ] ]
+            - Name: 'S3_ACCESS_KEY'
+              Value: !Ref StorageS3UserAccessKey
+            - Name: 'S3_SECRET_KEY'
+              Value: !GetAtt StorageS3UserAccessKey.SecretAccessKey
+            - Name: 'S3_REGION'
+              Value: !Ref AWS::Region
+            - Name: 'S3_BUCKET'
+              Value: !Ref StorageS3Bucket
+            - Name: 'HASURA_ENDPOINT'
+              Value: !Join [
+                '',
+                [
+                  'http://',
+                  !Join [ '.', [ !GetAtt HasuraSDService.Name, !Ref APIName ] ],
+                  ':',
+                  !Ref HasuraContainerPort,
+                  '/v1',
+                ],
+              ]
+            - Name: 'HASURA_GRAPHQL_ADMIN_SECRET'
+              Value: !Ref 'HasuraAdminSecret'
+            - Name: 'POSTGRES_MIGRATIONS'
+              Value: "0"
+            - Name: 'HASURA_METADATA'
+              Value: "0"
+            - Name: 'DEBUG'
+              Value: "0"
+            - Name: 'S3_ENDPOINT'
+              Value: ""
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref StorageAPILogGroup
+              awslogs-stream-prefix: ecs
+
+  StorageTargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: !Join [ '-', [ !Ref APIName, storage-tg ] ]
+      Port: !Ref StorageContainerPort
+      Protocol: HTTP
+      HealthCheckIntervalSeconds: 10
+      # will look for a 200 status code by default unless specified otherwise
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: "/healthz"
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 2
+      HealthyThresholdCount: 2
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 60 # default is 300
+      TargetType: ip
+      VpcId: !Ref VpcId
+
+  StorageListenerRuleHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref StorageTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - "/v1/files/*"
+            - "/v1/ops/*"
+      ListenerArn: !Ref ALBListenerHTTPS
+      Priority: 2
+
+  StorageAPIECSService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - AppLoadBalancer
+      - StorageListenerRuleHTTPS
+      - StorageTargetGroup
+    Properties:
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref StorageAPITaskDefinition
+      ServiceName: !Join [ '-', [ !Ref APIName, storageApi ] ]
+      SchedulingStrategy: REPLICA
+      DesiredCount: 1
+      LaunchType: FARGATE
+      LoadBalancers:
+        - ContainerName: !Join [ '-', [ !Ref APIName, storageApi-container ] ]
+          ContainerPort: !Ref StorageContainerPort
+          TargetGroupArn: !Ref StorageTargetGroup
+
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: DISABLED
+          Subnets:
+            - !Ref 'VpcPrivateSubnetA'
+            - !Ref 'VpcPrivateSubnetB'
+          SecurityGroups:
+            - !Ref 'EC2SecurityGroup'
+      PlatformVersion: LATEST
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      DeploymentController:
+        Type: ECS
+      EnableECSManagedTags: true
+      ServiceConnectConfiguration:
+        Enabled: false
+      ServiceRegistries:
+        - RegistryArn: !GetAtt StorageSDService.Arn
+          ContainerName: !Join [ '-', [ !Ref APIName, storageApi-container ] ]
+
+  StorageS3User:
+    Type: AWS::IAM::User
+    Properties:
+      Policies:
+        - PolicyName: bucket-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource:
+                  - !Sub arn:aws:s3:::${StorageS3Bucket}
+                  - !Sub arn:aws:s3:::${StorageS3Bucket}/*
+  StorageS3UserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref StorageS3User
 
 Outputs:
   AZA:
