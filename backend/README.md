@@ -1,3 +1,23 @@
+# AWS initial setup
+
+1. Setup VPC with at least 2 zones (for us-east-1 it must be 1a and 1c) and a nat gateway for private subnets
+2. Add domains into the route53
+3. Add KMS keys for Redis and Postgres RDS
+4. Setup Redis/MemoryDB with single node/shard. The redis must have no TLS/in-transit encryption.
+If created with multiple nodes - remove additional nodes so that only 1 node remains, cluster is not supported
+5. Setup Postgres RDS instance, see below for database configuration
+6. Request certificates for api- and app- subdomains
+7. Setup ECR repository and update workflows
+8. Setup the auth0 account
+9. Run the `string.template` cloudformation template
+10. Create new IAM user for deployments via github.
+User must have permissions to create new AWS ECR repos as well as push new images.
+User must also have permissions to update AWS ECS services
+11. Create access key for IAM user and fill `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_ACCOUNT_ID` in the GitHub repository's secrets storage for use in CI/CD.
+12. Run the GitHub deployment action and let it generate Docker images for hasura/django
+13. Enter all information into the `everything.template` defaults for ease of re-running 
+14. Run the cloudformation template and fix incoming issues until deployment is successful.
+
 # Database
 ### Creating new database:
 

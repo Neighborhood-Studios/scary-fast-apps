@@ -3,37 +3,40 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: 'Deployes hasura ecs service for existing RDS and VPC'
 Parameters:
   APIName:
-    Description: The name of the ECS Service. Main Prefix.
+    Description: The name of the ECS cluster. Main Prefix.
     Type: String
-    Default: 'SFA-<CHANGE_ME>'
+    Default: 'sfa-dev'
 
   DomainName:
     Type: String
     Description: The DNS name of an existing Amazon Route 53 hosted zone e.g. domainname.com
-    Default: sfaconstruction.net
+    Default: 'sfaconstruction.net'
 
   AppFullDomainName:
     Type: String
     Description: The full domain name where static app is hosted e.g. app.domainname.com
-    Default: appstaging.sfaconstruction.net
+    Default: 'app-dev.sfaconstruction.net'
   ApiFullDomainName:
     Type: String
     Description: The full domain name where API is hosted e.g. api.domainname.com
-    Default: apistaging.sfaconstruction.net
+    Default: 'api-dev.sfaconstruction.net'
 
   a0DomainName:
     Type: String
     Description: Domain name of a0 tenant. Something like dev-jnso8xn6b1daq18g.us.auth0.com
+    Default: 'dev-jnso8xn6b1daq18g.us.auth0.com'
   a0ApiIdentifier:
     Type: String
     Description: a0 API identifier of Frontend app, e.g. https://api-staging.sfaconstruction.net
-
+    Default: 'https://api-dev.joinhomegrown.com'
   a0ManagementClientSecret:
     Type: String
     Description: Client secret for a0 management API
+    Default: ''
   a0ManagementClientId:
     Type: String
     Description: Client id for a0 management API
+    Default: ''
 
   APPCertificateARN:
     Description: Arn of the main APP.<domain>, must be in east-1 region
@@ -57,11 +60,11 @@ Parameters:
   DBUserPassword:
     Description: 'The password that will be used alongside the root admin username'
     Type: String
-    Default: '!hastest!'
+    Default: 'django_pass!!!'
   DBName:
     Description: 'The name of the PostgreSQL database'
     Type: String
-    Default: 'hastest1'
+    Default: 'sfa_dev'
 
   HasuraDBUsername:
     Description: 'The DB username that will be used for hasura, with only select\update permissions in PostgreSQL'
@@ -70,12 +73,14 @@ Parameters:
   HasuraDBUserPassword:
     Description: 'The password that will be used alongside the root admin username'
     Type: String
-    Default: '!hastest!'
+    Default: 'hasura_pass!!!'
 
   RedisHost:
     Description: 'The hostname of the Redis database'
     Type: String
     Default: 'stagingnew.xlvwpc.clustercfg.memorydb.us-west-1.amazonaws.com'
+    AllowedPattern: "[^:]*"
+
   RedisPort:
     Description: 'The port of the Redis database'
     Type: String
@@ -131,6 +136,7 @@ Parameters:
   HasuraAdminSecret:
     Description: 'The haasura console should have an access key for basic security.'
     Type: String
+    Default: '!hg_supersecret!'
 
   OneSignalAppId:
     Description: 'App ID for OneSignal integration'
