@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 import macrosPlugin from 'vite-plugin-babel-macros';
 import svgr from 'vite-plugin-svgr';
+
 import { getPaymentIntent } from './dev/stripe';
 import { plaidBESimulator } from './dev/plaid';
 
@@ -41,6 +42,11 @@ export default defineConfig({
         }),
         react(),
     ],
+    define: {
+        ['import.meta.env.PACKAGE_VERSION']: JSON.stringify(
+            process.env.npm_package_version
+        ),
+    },
 });
 
 function proxyApiHandler(

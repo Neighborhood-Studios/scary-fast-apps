@@ -166,6 +166,12 @@ class ManagementAPI:
         # ]
         return data.json()
 
+    def get_user(self, user_id):
+        url = self.base_url + 'api/v2/users/%s' % user_id
+        data = self.make_api_call('get', url)
+
+        return data.json()
+
     def assign_role_to_user(self, user_id, role_id):
         url = self.base_url + 'api/v2/users/%s/roles' % user_id
         self.make_api_call('post', url, json_data={

@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import logging
 
 import jwt
@@ -14,6 +16,14 @@ from users.models.role import RoleOrder
 class RoleAssignSerializer(serializers.Serializer):
     user_id = serializers.CharField(max_length=100)
     role_name = serializers.CharField(max_length=100)
+
+
+class OSUserIdIdenSerializer(serializers.Serializer):
+    user_id = serializers.CharField(max_length=100)
+
+
+class OSPhoneNumberIdenSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(max_length=100)
 
 
 @api_view(['POST'])
@@ -110,3 +120,61 @@ def unassign_role(request):
             break
 
     return JsonResponse({'status': 'successful'})
+
+
+@api_view(['POST'])
+def os_identify_user_id(request):
+    # see https://documentation.onesignal.com/v11.0/docs/identity-verification
+    token = get_token_auth_header(request)
+    if not token:
+        return HttpResponseNotFound()
+    serializer = OSUserIdIdenSerializer(data=request.data)
+    if not serializer.is_valid():
+        return JsonResponse(serializer.errors, status=400)
+
+    payload = jwt.decode(token, options={'verify_signature': False})
+    initiator_user_id = payload.get('sub')
+
+    user_id = serializer.validated_data['user_id']
+    if user_id != initiator_user_id:
+        return HttpResponseNotFound()
+
+    user_id_hash = hmac.new(
+        bytes(settings.ONESIGNAL_API_KEY, 'UTF-8'),
+        user_id.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    return JsonResponse({'status': 'successful', 'user_id_hash': user_id_hash})
+
+
+@api_view(['POST'])
+def os_identify_phone_number(request):
+    token = get_token_auth_header(request)
+    if not token:
+        return HttpResponseNotFound()
+    serializer = OSPhoneNumberIdenSerializer(data=request.data)
+    if not serializer.is_valid():
+        return JsonResponse(serializer.errors, status=400)
+
+    payload = jwt.decode(token, options={'verify_signature': False})
+    initiator_user_id = payload.get('sub')
+
+    phone_number = serializer.validated_data['phone_number']
+
+    # TODO: implement basic phone validation?
+    # mapi = ManagementAPI(settings.AUTH0_MANAGEMENT_CLIENT_ID,
+    #                      settings.AUTH0_MANAGEMENT_CLIENT_SECRET,
+    #                      settings.AUTH0_DOMAIN)
+    #
+    # initiator_user = mapi.get_user(initiator_user_id)
+    # if phone_number != initiator_user.get('app_metadata').get('phoneNumber'):
+    #     return JsonResponse({'status': 'error', 'msg': 'number mismatch'}, status=403)
+
+    phone_hash = hmac.new(
+        bytes(settings.ONESIGNAL_API_KEY, 'UTF-8'),
+        phone_number.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    return JsonResponse({'status': 'successful', 'phone_hash': phone_hash})
