@@ -34,10 +34,16 @@ on:
         type: string
 
       django_drq_service:
-        description: "django dramatiq service name"
+        description: "django dramatiq runner service name"
         type: string
       django_drq_task_def:
-        description: "django dramatiq task definition"
+        description: "django dramatiq runner task definition"
+        type: string
+      django_cron_service:
+        description: "django dramatiq cron service name"
+        type: string
+      django_cron_task_def:
+        description: "django dramatiq cron task definition"
         type: string
 
 jobs:
@@ -71,6 +77,7 @@ jobs:
           aws configure set region ${{ inputs.aws_region }}
           aws ecs update-service --cluster ${{ inputs.ecs_cluster }} --service ${{ inputs.django_service }} --task-definition ${{ inputs.django_task_def }} --force-new-deployment
           aws ecs update-service --cluster ${{ inputs.ecs_cluster }} --service ${{ inputs.django_drq_service }} --task-definition ${{ inputs.django_drq_task_def }} --force-new-deployment
+          aws ecs update-service --cluster ${{ inputs.ecs_cluster }} --service ${{ inputs.django_cron_service }} --task-definition ${{ inputs.django_cron_task_def }} --force-new-deployment
 
   build-hasura:
     runs-on: ubuntu-latest

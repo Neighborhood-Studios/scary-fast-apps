@@ -2,9 +2,10 @@ name: "Backend Dev Deploy"
 
 on:
   push:
-    branches: [ dev, s3_storage ]
+    branches: [ dev, master ]
     paths:
-      - 'backend/**/*'
+      - 'backend/django/**/*'
+      - 'backend/hasura/**/*'
       - '.github/**/*'
   workflow_dispatch:
 
@@ -26,5 +27,7 @@ jobs:
       django_task_def: sfa-dev-DjangoTaskDefinition
       django_drq_service: sfa-dev-djangoDMTQ
       django_drq_task_def: sfa-dev-DjangoDMTQTaskDefinition
+      django_cron_service: sfa-dev-djangoCron
+      django_cron_task_def: sfa-dev-DjangoCronTaskDefinition
 
     secrets: inherit
