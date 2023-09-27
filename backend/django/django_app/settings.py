@@ -12,8 +12,22 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 
 import dotenv
+import sentry_sdk
+import sentry_sdk.utils
 
 from pathlib import Path
+from corsheaders.defaults import default_headers
+
+if os.getenv('SENTRY_DSN'):
+    _sentry_env = os.getenv('SENTRY_ENV', 'development')
+    sentry_sdk.init(
+        dsn=os.getenv('SENTRY_DSN'),
+        traces_sample_rate=1.0,  # can be reduced in prod...
+        environment=os.getenv('SENTRY_ENV', 'development'),
+        send_default_pii=True if _sentry_env != 'production' else False,
+        attach_stacktrace=True,
+        max_value_length=4096,
+    )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,6 +44,9 @@ SECRET_KEY = 'django-insecure-zamzfbodhhn2p_p)m7=pzzz^j4kosi0)q6gk_4_%^hl_y%hyuc
 DEBUG = os.getenv('DEBUG') == 'True'
 
 ALLOWED_HOSTS = [os.getenv("API_DOMAIN_NAME")]
+
+API_DOMAIN_NAME = os.getenv("API_DOMAIN_NAME")
+APP_DOMAIN_NAME = os.getenv("APP_DOMAIN_NAME")
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.RemoteUserBackend',
@@ -49,10 +66,31 @@ ONESIGNAL_APP_ID = os.getenv("ONESIGNAL_APP_ID")
 # see https://documentation.onesignal.com/docs/twilio-setup
 ONESIGNAL_TWILIO_FROM_NUMBER = os.getenv("ONESIGNAL_TWILIO_FROM_NUMBER")
 
+PLAID_CLIENT_ID = os.getenv("PLAID_CLIENT_ID")
+PLAID_SECRET = os.getenv("PLAID_SECRET")
+PLAID_APP_NAME = os.getenv("PLAID_APP_NAME", 'SFA')
+PLAID_ENV = os.getenv("PLAID_ENV", 'Sandbox')
+
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
+
+
+CORS_ALLOWED_ORIGINS = [
+    'https://%s' % APP_DOMAIN_NAME,
+]
+
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+    "sentry-trace",
+    "baggage"
+)
 # Application definition
 
 INSTALLED_APPS = [
     'django_dramatiq',
+    'dramatiq_crontab',
+    'corsheaders',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -68,12 +106,15 @@ INSTALLED_APPS = [
     'core_utils.apps.CoreUtilsConfig',
     'users.apps.UsersConfig',
     'storage.apps.StorageConfig',
+    'plaid_app.apps.PlaidAppConfig',
+    'twilio_app.apps.TwilioAppConfig',
 ]
 
 MIDDLEWARE = [
     'core_utils.middleware.elb_health_check.ELBHealthCheckMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
 

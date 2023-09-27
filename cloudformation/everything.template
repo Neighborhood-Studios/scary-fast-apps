@@ -1,11 +1,16 @@
 #!AWSTemplateFormat
 AWSTemplateFormatVersion: 2010-09-09
-Description: 'Deployes hasura ecs service for existing RDS and VPC'
+Description: 'Deploys hasura ecs service for existing RDS and VPC'
 Parameters:
   APIName:
-    Description: The name of the ECS cluster. Main Prefix.
+    Description: The name of the ECS Service. Main Prefix.
     Type: String
     Default: 'sfa-dev'
+
+  Environment:
+    Description: "Env name, used in few places like sentry. Possible values: 'development', 'staging', 'production'"
+    Type: String
+    Default: 'development'
 
   DomainName:
     Type: String
@@ -28,15 +33,7 @@ Parameters:
   a0ApiIdentifier:
     Type: String
     Description: a0 API identifier of Frontend app, e.g. https://api-staging.sfaconstruction.net
-    Default: 'https://api-dev.joinhomegrown.com'
-  a0ManagementClientSecret:
-    Type: String
-    Description: Client secret for a0 management API
-    Default: ''
-  a0ManagementClientId:
-    Type: String
-    Description: Client id for a0 management API
-    Default: ''
+    Default: 'https://api-dev.sfaconstruction.net/v1/graphql'
 
   APPCertificateARN:
     Description: Arn of the main APP.<domain>, must be in east-1 region
@@ -57,10 +54,7 @@ Parameters:
     Description: 'The DB username that will be used for the root admin user in PostgreSQL'
     Type: String
     Default: 'sfa_dev'
-  DBUserPassword:
-    Description: 'The password that will be used alongside the root admin username'
-    Type: String
-    Default: 'django_pass!!!'
+
   DBName:
     Description: 'The name of the PostgreSQL database'
     Type: String
@@ -70,10 +64,6 @@ Parameters:
     Description: 'The DB username that will be used for hasura, with only select\update permissions in PostgreSQL'
     Type: String
     Default: 'sfa_dev_hasura'
-  HasuraDBUserPassword:
-    Description: 'The password that will be used alongside the root admin username'
-    Type: String
-    Default: 'hasura_pass!!!'
 
   RedisHost:
     Description: 'The hostname of the Redis database'
@@ -101,22 +91,6 @@ Parameters:
     Type: String
     Default: 'nhost/hasura-storage:0.3.6'
 
-  HasuraContainerPort:
-    # this can be hardcoded...
-    Description: 'Hasura container exposes stuff over 8080. We need to tell this to the container definition.'
-    Type: Number
-    Default: 8080
-  DjangoContainerPort:
-    # this can be hardcoded...
-    Description: 'Django container exposes stuff over 8080. We need to tell this to the container definition.'
-    Type: Number
-    Default: 8080
-  StorageContainerPort:
-    # this can be hardcoded...
-    Description: 'Storage container exposes stuff over 8080. We need to tell this to the container definition.'
-    Type: Number
-    Default: 8000
-
   HasuraHealthCheckPath:
     Description: 'The Health check path. Hasura exposes /healthz as a health check path. Used on the LoadBalancing Target group.'
     Type: String
@@ -133,18 +107,26 @@ Parameters:
     Description: 'target CPU utilization (%)'
     Type: Number
     Default: 80
-  HasuraAdminSecret:
-    Description: 'The haasura console should have an access key for basic security.'
+
+  HasuraAWSSecretName:
+    Description: 'The NAME of a secret in AWS Secret manager containing Hasura related secrets'
     Type: String
-    Default: '!hg_supersecret!'
+    Default: 'hasura-secret'
+
+  HasuraAWSSecretArn:
+    Description: 'The ARN of a secret in AWS Secret manager containing Hasura related secrets'
+    Type: String
+    Default: 'arn:aws:secretsmanager:'
+    AllowedPattern: 'arn:aws:secretsmanager:.*'
+
+  DjangoAWSSecretArn:
+    Description: 'The ARN of a secret in AWS Secret manager containing Django related secrets'
+    Type: String
+    Default: 'arn:aws:secretsmanager:'
+    AllowedPattern: 'arn:aws:secretsmanager:.*'
 
   OneSignalAppId:
     Description: 'App ID for OneSignal integration'
-    Type: String
-    Default: ''
-
-  OneSignalApiKey:
-    Description: 'API key for OneSignal integration'
     Type: String
     Default: ''
 
@@ -185,13 +167,28 @@ Parameters:
     Type: AWS::EC2::SecurityGroup::Id
     Description: 'ID of Redis security group that will be modified to allow access on 6379 port'
     Default: 'sg-07287fdd3d8e7aa62'
-  HasuraJWTSSecret:
+
+  PlaidEnv:
     Type: String
-    Description: 'HASURA_GRAPHQL_JWT_SECRET value'
+    Description: 'Optional; Plaid env, Sandbox,Development,Production'
+    Default: 'Sandbox'
+
+  TwilioVerifyServiceId:
+    Type: String
+    Description: 'Optional; TWILIO_VERIFY_SID value'
     Default: ''
 
-Conditions:
-  IsEnvEmpty: !Equals [ "HasuraJWTSSecret", "" ]
+  KMSFeBeKeyID:
+    Type: String
+    Description: 'Optional; Key ID / ARN / alias for encrypting/decrypting data send from BE'
+    Default: ''
+
+Mappings:
+  ALL:
+    Ports:
+      HasuraContainerPort: 8080
+      DjangoContainerPort: 8080
+      StorageContainerPort: 8000
 
 Resources:
   ECSServiceNamespace:
@@ -317,6 +314,22 @@ Resources:
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+      Policies:
+        - PolicyName: AllowSMAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: SMAccess
+                Effect: Allow
+                Action:
+                  # - "ssm:GetParameters"
+                  - "secretsmanager:GetSecretValue"
+                  # - "kms:Decrypt"  # required if custom kms is used
+                Resource:
+                  # - "arn:aws:ssm:region:aws_account_id:parameter/parameter_name"
+                  - !Ref HasuraAWSSecretArn
+                  - !Ref DjangoAWSSecretArn
+                  # - "arn:aws:kms:region:aws_account_id:key/key_id"
   # A role for the containers
   ECSTaskRole:
     Type: AWS::IAM::Role
@@ -404,7 +417,7 @@ Resources:
         - Name: !Join [ '-', [ !Ref APIName, hasura-container ] ]
           Image: !Ref HasuraDockerImage
           PortMappings:
-            - ContainerPort: !Ref HasuraContainerPort
+            - ContainerPort: !FindInMap [ ALL,  Ports,  HasuraContainerPort ]
               Name: hasuraapp
               AppProtocol: http
           # Send logs to CloudWatch Logs
@@ -418,7 +431,8 @@ Resources:
                     'postgres://',
                     !Ref 'HasuraDBUsername',
                     ':',
-                    !Ref 'HasuraDBUserPassword',
+                    # alternative is to put whole string into the secret manager...
+                    !Sub '{{resolve:secretsmanager:${HasuraAWSSecretName}:SecretString:HASURA_DB_PASSWORD}}',
                     '@',
                     !Ref 'DBEndpoint',
                     ':5432/',
@@ -431,19 +445,17 @@ Resources:
               Value: 'false'
             - Name: 'HASURA_GRAPHQL_ENABLED_LOG_TYPES'
               Value: 'startup, http-log, webhook-log, websocket-log, query-log'
-            - Name: 'HASURA_GRAPHQL_ADMIN_SECRET'
-              Value: !Ref 'HasuraAdminSecret'
             - Name: 'HASURA_GRAPHQL_DEV_MODE'
               Value: 'true'
             - Name: 'HASURA_GRAPHQL_UNAUTHORIZED_ROLE'
               Value: 'guest'
             - Name: 'HASURA_GRAPHQL_METADATA_DEFAULTS'
               Value: "{\"backend_configs\":{\"dataconnector\":{\"athena\":{\"uri\":\"http://data-connector-agent:8081/api/v1/athena\"},\"mariadb\":{\"uri\":\"http://data-connector-agent:8081/api/v1/mariadb\"},\"mysql8\":{\"uri\":\"http://data-connector-agent:8081/api/v1/mysql\"},\"oracle\":{\"uri\":\"http://data-connector-agent:8081/api/v1/oracle\"},\"snowflake\":{\"uri\":\"http://data-connector-agent:8081/api/v1/snowflake\"}}}}"
-            - !If
-              - "IsEnvEmpty"
-              - Name: "HASURA_GRAPHQL_JWT_SECRET"
-                Value: !Ref 'HasuraJWTSSecret'
-              - !Ref "AWS::NoValue"
+          Secrets:
+            - Name: 'HASURA_GRAPHQL_ADMIN_SECRET'
+              ValueFrom: !Sub '${HasuraAWSSecretArn}:HASURA_GRAPHQL_ADMIN_SECRET::'
+            - Name: 'HASURA_GRAPHQL_JWT_SECRET'
+              ValueFrom: !Sub '${HasuraAWSSecretArn}:HASURA_GRAPHQL_JWT_SECRET::'
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -486,14 +498,14 @@ Resources:
       ServiceRegistries:
         - RegistryArn: !GetAtt HasuraSDService.Arn
           ContainerName: !Join [ '-', [ !Ref APIName, hasura-container ] ]
-#          ContainerPort: !Ref HasuraContainerPort  # somehow port causes error
+          # ContainerPort: !Ref HasuraContainerPort  # somehow port causes error
       EnableECSManagedTags: true
       DeploymentController:
         Type: ECS
       SchedulingStrategy: REPLICA
       LoadBalancers:
         - ContainerName: !Join [ '-', [ !Ref APIName, hasura-container ] ]
-          ContainerPort: !Ref HasuraContainerPort
+          ContainerPort: !FindInMap [ ALL,  Ports,  HasuraContainerPort ]
           TargetGroupArn: !Ref HasuraTargetGroup
 
   HasuraTargetGroup:
@@ -502,7 +514,7 @@ Resources:
     Properties:
       Name: !Join [ '-', [ !Ref APIName, tg ] ]
       Protocol: HTTP
-      Port: !Ref HasuraContainerPort
+      Port: !FindInMap [ ALL,  Ports,  HasuraContainerPort ]
       HealthCheckIntervalSeconds: 10
       # will look for a 200 status code by default unless specified otherwise
       HealthCheckProtocol: HTTP
@@ -622,7 +634,7 @@ Resources:
         - Name: !Join [ '-', [ !Ref APIName, djangoApi-container ] ]
           Image: !Ref DjangoDockerImage
           PortMappings:
-            - ContainerPort: !Ref DjangoContainerPort
+            - ContainerPort: !FindInMap [ ALL,  Ports,  DjangoContainerPort ]
               Name: djangoapp
               AppProtocol: http
 
@@ -632,8 +644,6 @@ Resources:
               Value: !Ref DBName
             - Name: 'DATA_DB_USER'
               Value: !Ref DBUsername
-            - Name: 'DATA_DB_PASSWORD'
-              Value: !Ref DBUserPassword
             - Name: 'DATA_DB_HOST'
               Value: !Ref DBEndpoint
             - Name: 'DATA_DB_PORT'
@@ -650,18 +660,38 @@ Resources:
               Value: !Ref a0DomainName
             - Name: 'AUTH0_API_IDENTIFIER'
               Value: !Ref a0ApiIdentifier
-            - Name: 'AUTH0_MANAGEMENT_CLIENT_SECRET'
-              Value: !Ref a0ManagementClientSecret
-            - Name: 'AUTH0_MANAGEMENT_CLIENT_ID'
-              Value: !Ref a0ManagementClientId
             - Name: 'API_DOMAIN_NAME'
               Value: !Ref ApiFullDomainName
+            - Name: 'APP_DOMAIN_NAME'
+              Value: !Ref AppFullDomainName
+            - Name: 'PLAID_ENV'
+              Value: !Ref PlaidEnv
             - Name: 'ONESIGNAL_APP_ID'
               Value: !Ref OneSignalAppId
-            - Name: 'ONESIGNAL_API_KEY'
-              Value: !Ref OneSignalApiKey
             - Name: 'ONESIGNAL_TWILIO_FROM_NUMBER'
               Value: !Ref OneSignalTwilioFromNumber
+            - Name: 'TWILIO_VERIFY_SID'
+              Value: !Ref TwilioVerifyServiceId
+            - Name: 'SENTRY_ENV'
+              Value: !Ref Environment
+          Secrets:
+            - Name: 'DATA_DB_PASSWORD'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:DJANGO_DATA_DB_PASSWORD::'
+            - Name: 'AUTH0_MANAGEMENT_CLIENT_SECRET'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:AUTH0_MANAGEMENT_CLIENT_SECRET::'
+            - Name: 'AUTH0_MANAGEMENT_CLIENT_ID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:AUTH0_MANAGEMENT_CLIENT_ID::'
+            - Name: 'PLAID_CLIENT_ID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:PLAID_CLIENT_ID::'
+            - Name: 'PLAID_SECRET'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:PLAID_SECRET::'
+            - Name: 'ONESIGNAL_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:ONESIGNAL_API_KEY::'
+            - Name: 'TWILIO_AUTH_TOKEN'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_AUTH_TOKEN::'
+            - Name: 'TWILIO_ACCOUNT_SID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_ACCOUNT_SID::'
+
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -712,8 +742,6 @@ Resources:
               Value: !Ref DBName
             - Name: 'DATA_DB_USER'
               Value: !Ref DBUsername
-            - Name: 'DATA_DB_PASSWORD'
-              Value: !Ref DBUserPassword
             - Name: 'DATA_DB_HOST'
               Value: !Ref DBEndpoint
             - Name: 'DATA_DB_PORT'
@@ -730,18 +758,136 @@ Resources:
               Value: !Ref a0DomainName
             - Name: 'AUTH0_API_IDENTIFIER'
               Value: !Ref a0ApiIdentifier
-            - Name: 'AUTH0_MANAGEMENT_CLIENT_SECRET'
-              Value: !Ref a0ManagementClientSecret
-            - Name: 'AUTH0_MANAGEMENT_CLIENT_ID'
-              Value: !Ref a0ManagementClientId
             - Name: 'API_DOMAIN_NAME'
               Value: !Ref ApiFullDomainName
+            - Name: 'APP_DOMAIN_NAME'
+              Value: !Ref AppFullDomainName
+            - Name: 'PLAID_ENV'
+              Value: !Ref PlaidEnv
             - Name: 'ONESIGNAL_APP_ID'
               Value: !Ref OneSignalAppId
-            - Name: 'ONESIGNAL_API_KEY'
-              Value: !Ref OneSignalApiKey
             - Name: 'ONESIGNAL_TWILIO_FROM_NUMBER'
               Value: !Ref OneSignalTwilioFromNumber
+            - Name: 'TWILIO_VERIFY_SID'
+              Value: !Ref TwilioVerifyServiceId
+            - Name: 'SENTRY_ENV'
+              Value: !Ref Environment
+          Secrets:
+            - Name: 'DATA_DB_PASSWORD'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:DJANGO_DATA_DB_PASSWORD::'
+            - Name: 'AUTH0_MANAGEMENT_CLIENT_SECRET'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:AUTH0_MANAGEMENT_CLIENT_SECRET::'
+            - Name: 'AUTH0_MANAGEMENT_CLIENT_ID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:AUTH0_MANAGEMENT_CLIENT_ID::'
+            - Name: 'PLAID_CLIENT_ID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:PLAID_CLIENT_ID::'
+            - Name: 'PLAID_SECRET'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:PLAID_SECRET::'
+            - Name: 'ONESIGNAL_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:ONESIGNAL_API_KEY::'
+            - Name: 'TWILIO_AUTH_TOKEN'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_AUTH_TOKEN::'
+            - Name: 'TWILIO_ACCOUNT_SID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_ACCOUNT_SID::'
+
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref DjangoLogGroup
+              awslogs-stream-prefix: ecs
+
+  DjangoCronTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    # Makes sure the log group is created before it is used.
+    DependsOn: DjangoLogGroup
+    Properties:
+      # Name of the task definition. Subsequent versions of the task definition are grouped together under this name.
+      Family: !Join [ '-', [ !Ref APIName, DjangoCronTaskDefinition ] ]
+      # awsvpc is required for Fargate
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      # 256 (.25 vCPU) - Available memory values: 0.5GB, 1GB, 2GB
+      # 512 (.5 vCPU) - Available memory values: 1GB, 2GB, 3GB, 4GB
+      # 1024 (1 vCPU) - Available memory values: 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB
+      # 2048 (2 vCPU) - Available memory values: Between 4GB and 16GB in 1GB increments
+      # 4096 (4 vCPU) - Available memory values: Between 8GB and 30GB in 1GB increments
+      Cpu: 256
+      # 0.5GB, 1GB, 2GB - Available cpu values: 256 (.25 vCPU)
+      # 1GB, 2GB, 3GB, 4GB - Available cpu values: 512 (.5 vCPU)
+      # 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB - Available cpu values: 1024 (1 vCPU)
+      # Between 4GB and 16GB in 1GB increments - Available cpu values: 2048 (2 vCPU)
+      # Between 8GB and 30GB in 1GB increments - Available cpu values: 4096 (4 vCPU)
+      Memory: 1GB
+      # A role needed by ECS.
+      # "The ARN of the task execution role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role."
+      # "There is an optional task execution IAM role that you can specify with Fargate to allow your Fargate tasks to make API calls to Amazon ECR."
+      ExecutionRoleArn: !Ref ECSExecutionRole
+      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that grants containers in the task permission to call AWS APIs on your behalf."
+      TaskRoleArn: !Ref ECSTaskRole
+      ContainerDefinitions:
+        - Name: !Join [ '-', [ !Ref APIName, djangoCron-container ] ]
+          Image: !Ref DjangoDockerImage
+          EntryPoint:
+            - "sh"
+            - "-c"
+            - "python manage.py crontab"
+          WorkingDirectory: "/app"
+          # Send logs to CloudWatch Logs
+          Environment:
+            - Name: 'DATA_DB_NAME'
+              Value: !Ref DBName
+            - Name: 'DATA_DB_USER'
+              Value: !Ref DBUsername
+            - Name: 'DATA_DB_HOST'
+              Value: !Ref DBEndpoint
+            - Name: 'DATA_DB_PORT'
+              Value: 5432
+            - Name: 'DATA_DB_CONN_MAX_AGE'
+              Value: "0"
+            - Name: 'DRAMATIQ_REDIS_HOST'
+              Value: !Ref RedisHost
+            - Name: 'DRAMATIQ_REDIS_PORT'
+              Value: !Ref RedisPort
+            - Name: 'DRAMATIQ_NAMESPACE'
+              Value: !Ref APIName
+            - Name: 'AUTH0_DOMAIN'
+              Value: !Ref a0DomainName
+            - Name: 'AUTH0_API_IDENTIFIER'
+              Value: !Ref a0ApiIdentifier
+            - Name: 'API_DOMAIN_NAME'
+              Value: !Ref ApiFullDomainName
+            - Name: 'APP_DOMAIN_NAME'
+              Value: !Ref AppFullDomainName
+            - Name: 'PLAID_ENV'
+              Value: !Ref PlaidEnv
+            - Name: 'ONESIGNAL_APP_ID'
+              Value: !Ref OneSignalAppId
+            - Name: 'ONESIGNAL_TWILIO_FROM_NUMBER'
+              Value: !Ref OneSignalTwilioFromNumber
+            - Name: 'TWILIO_VERIFY_SID'
+              Value: !Ref TwilioVerifyServiceId
+            - Name: 'SENTRY_ENV'
+              Value: !Ref Environment
+          Secrets:
+            - Name: 'DATA_DB_PASSWORD'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:DJANGO_DATA_DB_PASSWORD::'
+            - Name: 'AUTH0_MANAGEMENT_CLIENT_SECRET'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:AUTH0_MANAGEMENT_CLIENT_SECRET::'
+            - Name: 'AUTH0_MANAGEMENT_CLIENT_ID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:AUTH0_MANAGEMENT_CLIENT_ID::'
+            - Name: 'PLAID_CLIENT_ID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:PLAID_CLIENT_ID::'
+            - Name: 'PLAID_SECRET'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:PLAID_SECRET::'
+            - Name: 'ONESIGNAL_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:ONESIGNAL_API_KEY::'
+            - Name: 'TWILIO_AUTH_TOKEN'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_AUTH_TOKEN::'
+            - Name: 'TWILIO_ACCOUNT_SID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_ACCOUNT_SID::'
+
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -753,7 +899,7 @@ Resources:
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
       Name: !Join [ '-', [ !Ref APIName, djtg ] ]
-      Port: !Ref DjangoContainerPort
+      Port: !FindInMap [ ALL,  Ports,  DjangoContainerPort ]
       Protocol: HTTP
       HealthCheckIntervalSeconds: 10
       # will look for a 200 status code by default unless specified otherwise
@@ -783,7 +929,7 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         - ContainerName: !Join [ '-', [ !Ref APIName, djangoApi-container ] ]
-          ContainerPort: !Ref DjangoContainerPort
+          ContainerPort: !FindInMap [ ALL,  Ports,  DjangoContainerPort ]
           TargetGroupArn: !Ref DjangoTargetGroup
 
       NetworkConfiguration:
@@ -837,6 +983,41 @@ Resources:
       DeploymentConfiguration:
         MaximumPercent: 200
         MinimumHealthyPercent: 100
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      DeploymentController:
+        Type: ECS
+      EnableECSManagedTags: true
+      ServiceConnectConfiguration:
+        Enabled: false
+
+  DjangoCronECSService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - AppLoadBalancer
+      - DjangoListenerRuleHTTPS
+      - DjangoTargetGroup
+    Properties:
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref DjangoCronTaskDefinition
+      ServiceName: !Join [ '-', [ !Ref APIName, djangoCron ] ]
+      SchedulingStrategy: REPLICA
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: DISABLED
+          Subnets:
+            - !Ref 'VpcPrivateSubnetA'
+            - !Ref 'VpcPrivateSubnetB'
+          SecurityGroups:
+            - !Ref 'EC2SecurityGroup'
+      PlatformVersion: LATEST
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
         DeploymentCircuitBreaker:
           Enable: true
           Rollback: true
@@ -1003,7 +1184,7 @@ Resources:
         - Name: !Ref AppFullDomainName
           Type: A
           AliasTarget:
-            HostedZoneId: Z2FDTNDATAQYW2 # special CloudFront distribution value
+            HostedZoneId: "Z2FDTNDATAQYW2" # special CloudFront distribution value
             DNSName: !GetAtt CFDistribution.DomainName
 
   APIDNSName:
@@ -1084,13 +1265,13 @@ Resources:
           Command:
             - "serve"
           PortMappings:
-            - ContainerPort: !Ref StorageContainerPort
+            - ContainerPort: !FindInMap [ ALL,  Ports,  StorageContainerPort ]
               Name: storageapi
               AppProtocol: http
           # Send logs to CloudWatch Logs
           Environment:
             - Name: 'BIND'
-              Value: !Join [ '', [ ":", !Ref StorageContainerPort ] ]
+              Value: !Join [ '', [ ":", !FindInMap [ ALL,  Ports,  StorageContainerPort ] ] ]
             - Name: 'S3_ACCESS_KEY'
               Value: !Ref StorageS3UserAccessKey
             - Name: 'S3_SECRET_KEY'
@@ -1106,12 +1287,10 @@ Resources:
                   'http://',
                   !Join [ '.', [ !GetAtt HasuraSDService.Name, !Ref APIName ] ],
                   ':',
-                  !Ref HasuraContainerPort,
+                  !FindInMap [ ALL,  Ports,  HasuraContainerPort ],
                   '/v1',
                 ],
               ]
-            - Name: 'HASURA_GRAPHQL_ADMIN_SECRET'
-              Value: !Ref 'HasuraAdminSecret'
             - Name: 'POSTGRES_MIGRATIONS'
               Value: "0"
             - Name: 'HASURA_METADATA'
@@ -1119,7 +1298,14 @@ Resources:
             - Name: 'DEBUG'
               Value: "0"
             - Name: 'S3_ENDPOINT'
-              Value: ""
+              Value: !Sub 'https://s3.${AWS::Region}.amazonaws.com'
+            - Name: 'PUBLIC_URL'
+              Value: !Sub 'https://${ApiFullDomainName}'
+            - Name: 'HASURA_GRAPHQL_CORS_DOMAIN'
+              Value: !Sub 'https://${AppFullDomainName},https://${ApiFullDomainName}'
+          Secrets:
+            - Name: 'HASURA_GRAPHQL_ADMIN_SECRET'
+              ValueFrom: !Sub '${HasuraAWSSecretArn}:HASURA_GRAPHQL_ADMIN_SECRET::'
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -1131,7 +1317,7 @@ Resources:
     Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
     Properties:
       Name: !Join [ '-', [ !Ref APIName, storage-tg ] ]
-      Port: !Ref StorageContainerPort
+      Port: !FindInMap [ ALL,  Ports,  StorageContainerPort ]
       Protocol: HTTP
       HealthCheckIntervalSeconds: 10
       # will look for a 200 status code by default unless specified otherwise
@@ -1175,7 +1361,7 @@ Resources:
       LaunchType: FARGATE
       LoadBalancers:
         - ContainerName: !Join [ '-', [ !Ref APIName, storageApi-container ] ]
-          ContainerPort: !Ref StorageContainerPort
+          ContainerPort: !FindInMap [ ALL,  Ports,  StorageContainerPort ]
           TargetGroupArn: !Ref StorageTargetGroup
 
       NetworkConfiguration:

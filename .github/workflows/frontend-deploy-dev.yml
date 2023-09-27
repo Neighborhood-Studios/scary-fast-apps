@@ -20,4 +20,5 @@ jobs:
       auth0_domain: ${{ vars.DEV_AUTH0_DOMAIN }}
       auth0_client_id: ${{ vars.DEV_AUTH0_CLIENT_ID }}
       auth0_audience: ${{ vars.DEV_AUTH0_AUDIENCE }}
+      heap_id: ${{vars.DEV_HEAP_ID}}
     secrets: inherit

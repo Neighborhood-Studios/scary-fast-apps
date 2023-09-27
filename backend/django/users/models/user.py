@@ -2,15 +2,23 @@ import onesignal.model.notification
 from django.apps import apps
 from django.conf import settings
 from django.db import models
+from django.db.models import UniqueConstraint, Q
+
+from core_utils.models import BaseModel
 
 
-class User(models.Model):
+class User(BaseModel):
+    class Meta:
+        constraints = [UniqueConstraint(fields=['phone_number'], condition=Q(phone_verified=True), name='user_verified_phone_number_uniq')]
+
     auth0id = models.CharField(max_length=70, null=False, primary_key=True)
-    name = models.CharField(max_length=150, null=True)
+    first_name = models.CharField(max_length=150, null=True)
+    last_name = models.CharField(max_length=150, null=True)
     last_seen = models.DateTimeField(null=True)
 
     phone_number = models.CharField(max_length=20, null=True)
     email = models.CharField(max_length=200, null=True)
+    phone_verified = models.BooleanField(default=False)
 
     def send_push_notification(self, title, message, badge_type='SetTo', badge_count=1, **kwargs):
         notification = onesignal.model.notification.Notification(
@@ -44,3 +52,4 @@ class User(models.Model):
             **kwargs
         )
         return apps.get_app_config('django_app').os_client.create_notification(notification=notification)
+

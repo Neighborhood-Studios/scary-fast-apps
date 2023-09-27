@@ -12,7 +12,7 @@ from jwt.algorithms import RSAAlgorithm
 
 from django.conf import settings
 
-from jwt import PyJWKClient, decode
+from jwt import PyJWKClient
 from typing import Any
 
 from core_utils.middleware.json_exception import JsonException
@@ -76,7 +76,7 @@ class RequestToken(object):
             )
 
         try:
-            return decode(
+            return jwt.decode(
                 jwt=self._token,
                 key=signing_key,
                 algorithms=["RS256"],

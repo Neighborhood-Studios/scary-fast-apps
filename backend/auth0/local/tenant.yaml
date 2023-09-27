@@ -1,0 +1,113 @@
+rules: []
+rulesConfigs: []
+hooks: []
+pages: []
+resourceServers:
+  - name: SFA Hasura dev
+    identifier: https://api-dev.sfaconstruction.net/v1/graphql
+    allow_offline_access: false
+    signing_alg: RS256
+    skip_consent_for_verifiable_first_party_clients: true
+    token_lifetime: 86400
+    token_lifetime_for_web: 7200
+  - name: SFA Hasura staging
+    identifier: https://api-staging.sfaconstruction.net
+    allow_offline_access: false
+    signing_alg: RS256
+    skip_consent_for_verifiable_first_party_clients: true
+    token_lifetime: 86400
+    token_lifetime_for_web: 7200
+
+tenant:
+  enabled_locales:
+    - en
+  flags:
+    revoke_refresh_token_grant: false
+    disable_clickjack_protection_headers: false
+  friendly_name: SFA DEV (and staging?)
+  picture_url: https://uploads-ssl.webflow.com/64108130b4101ef3118a480e/6410ad53e514b7f64f74a138_4%202.png
+  sandbox_version: '18'
+  support_email: ''
+  support_url: ''
+  universal_login:
+    colors:
+      page_background: '#E3E8DB'
+      primary: '#002B2B'
+
+emailProvider: {}
+emailTemplates:
+  - template: verify_email
+    body: ./emailTemplates/verify_email.html
+    enabled: true
+    from: ''
+    resultUrl: '{{ application.callback_domain }}'
+    subject: ''
+    syntax: liquid
+    urlLifetimeInSeconds: 432000
+
+migrations: {}
+actions:
+  - name: Handle google auth
+    code: ./actions/Handle google auth/code.js
+    dependencies:
+      - name: auth0
+        version: 4.0.1
+    deployed: true
+    runtime: node18-actions
+    secrets:
+      - name: managemtAPI_APP_clientID
+      - name: managemtAPI_APP_secret
+      - name: managemtAPI_APP_domain
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v3
+  - name: custom claims
+    code: ./actions/custom claims/code.js
+    dependencies: []
+    deployed: true
+    runtime: node18-actions
+    secrets: []
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v3
+  - name: hasura sync users
+    code: ./actions/hasura sync users/code.js
+    dependencies:
+      - name: axios
+        version: 1.4.0
+    deployed: true
+    runtime: node18-actions
+    secrets:
+      - name: dev_gql_endpoint
+      - name: dev_client_Id
+      - name: dev_gql_admin_secret
+      - name: staging_client_Id
+      - name: staging_gql_admin_secret
+      - name: staging_gql_endpoint
+      - name: dev_admin_app_client_id
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v3
+  - name: hasura-jwt-claims
+    code: ./actions/hasura-jwt-claims/code.js
+    dependencies: []
+    deployed: true
+    runtime: node18-actions
+    secrets: []
+    status: built
+    supported_triggers:
+      - id: post-login
+        version: v3
+triggers:
+  post-login:
+    - action_name: Handle google auth
+      display_name: Handle google auth
+    - action_name: custom claims
+      display_name: custom claims
+    - action_name: hasura-jwt-claims
+      display_name: hasura-jwt-claims
+    - action_name: hasura sync users
+      display_name: hasura sync users
