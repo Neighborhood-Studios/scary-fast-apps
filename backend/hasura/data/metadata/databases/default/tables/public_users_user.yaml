@@ -2,35 +2,38 @@ table:
   name: users_user
   schema: public
 array_relationships:
-  - name: posts
+  - name: users_user_storage_files
     using:
-      foreign_key_constraint_on:
-        column: user
-        table:
-          name: posts
-          schema: public
-  - name: storage_files
-    using:
-      foreign_key_constraint_on:
-        column: uploaded_by_user_id
-        table:
+      manual_configuration:
+        column_mapping:
+          auth0id: uploaded_by_user_id
+        insertion_order: null
+        remote_table:
           name: storage_files
           schema: public
 select_permissions:
   - role: manager
     permission:
       columns:
+        - active
         - auth0id
+        - created_at
         - email
-        - name
+        - email_verified
+        - first_name
+        - last_name
         - phone_number
+        - phone_verified
         - last_seen
+        - updated_at
       filter: {}
+      allow_aggregations: true
   - role: user
     permission:
       columns:
         - auth0id
-        - name
+        - first_name
+        - last_name
         - last_seen
       filter:
         auth0id:

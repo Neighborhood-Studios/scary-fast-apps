@@ -69,6 +69,7 @@ jobs:
           region: ${{ inputs.aws_region }}
           tags: latest,${{ github.sha }}
           dockerfile: Dockerfile-django
+          create_repo: true
 
       - name: Updating the service ...
         run: |
@@ -98,6 +99,7 @@ jobs:
           region: ${{ inputs.aws_region }}
           tags: latest,${{ github.sha }}
           dockerfile: Dockerfile-hasura
+          create_repo: true
 
       - name: Updating the service ...
         run: |

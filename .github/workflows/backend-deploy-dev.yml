@@ -2,9 +2,10 @@ name: "Backend Dev Deploy"
 
 on:
   push:
-    branches: [ dev, master ]
+    branches: [ dev ]
     paths:
       - 'backend/django/**/*'
+      - 'backend/Dockerfile-*'
       - 'backend/hasura/**/*'
       - '.github/**/*'
   workflow_dispatch:

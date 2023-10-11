@@ -1,0 +1,10 @@
+{
+  "AUTH0_DOMAIN": "",
+  "AUTH0_CLIENT_ID": "",
+
+  "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
+    "ENV": "staging",
+    "ALLOWED_ORIGINS_ADMIN_APP": ["https://app-staging.sfaconstruction.com/admin/"],
+    "ALLOWED_ORIGINS": ["https://app-staging.sfaconstruction.com/"]
+  }
+}

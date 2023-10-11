@@ -41,7 +41,7 @@ def get_client_user_agent(request):
 
 def authorize_and_create_investment(
         user: User, amount: Decimal, user_present: bool, beacon_session_id, device_ip, device_ua
-) -> tuple[PlaidTransfer or None, TransferAuthorization or None, Any]:
+) -> tuple[PlaidTransfer | None, TransferAuthorization | None, Any]:
     try:
         # TODO: We call /accounts/get to obtain first account_id - in production,
         # account_id's should be persisted in a data store and retrieved
@@ -53,7 +53,8 @@ def authorize_and_create_investment(
         logging.info('accounts_get response: %s', response.to_dict())
 
         account_id = response['accounts'][0]['account_id']
-
+        # investor_data = user.investordata
+        investor_data = user
         request = TransferAuthorizationCreateRequest(
             access_token=access_token,
             account_id=account_id,
@@ -68,8 +69,8 @@ def authorize_and_create_investment(
                 user_agent=device_ua,
             ),
             user=TransferAuthorizationUserInRequest(
-                legal_name='%s %s' % (user.first_name, user.last_name),
-                phone_number=user.phone_number if user.phone_verified else '',
+                legal_name='%s %s' % (investor_data.first_name, investor_data.last_name),
+                phone_number=investor_data.phone_number if investor_data.phone_verified else '',
                 # address?
             ),
         )

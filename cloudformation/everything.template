@@ -2,10 +2,11 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: 'Deploys hasura ecs service for existing RDS and VPC'
 Parameters:
+  # You can/should edit "Default" values to ease up the deployment
   APIName:
-    Description: The name of the ECS Service. Main Prefix.
+    Description: 'The name of the ECS Service. Main Prefix., example: sfa-dev'
     Type: String
-    Default: 'sfa-dev'
+    Default: ''
 
   Environment:
     Description: "Env name, used in few places like sentry. Possible values: 'development', 'staging', 'production'"
@@ -14,44 +15,46 @@ Parameters:
 
   DomainName:
     Type: String
-    Description: The DNS name of an existing Amazon Route 53 hosted zone e.g. domainname.com
-    Default: 'sfaconstruction.net'
+    Description: 'The MAIN DNS name of an existing Amazon Route 53 hosted zone, example: sfaconstruction.net'
+    Default: ''
 
   AppFullDomainName:
     Type: String
-    Description: The full domain name where static app is hosted e.g. app.domainname.com
-    Default: 'app-dev.sfaconstruction.net'
+    Description: 'The full domain name where static app is hosted, must be a subdomain, example: app-dev.sfaconstruction.net'
+    Default: ''
   ApiFullDomainName:
     Type: String
-    Description: The full domain name where API is hosted e.g. api.domainname.com
-    Default: 'api-dev.sfaconstruction.net'
+    Description: 'The full domain name where API is hosted, must be a subdomain, example: api-dev.sfaconstruction.net'
+    Default: ''
 
   a0DomainName:
     Type: String
-    Description: Domain name of a0 tenant. Something like dev-jnso8xn6b1daq18g.us.auth0.com
-    Default: 'dev-jnso8xn6b1daq18g.us.auth0.com'
+    Description: 'Domain name of Auth0 tenant. Something like dev-jnso8xn6b1daq18g.us.auth0.com'
+    Default: ''
   a0ApiIdentifier:
     Type: String
-    Description: a0 API identifier of Frontend app, e.g. https://api-staging.sfaconstruction.net
-    Default: 'https://api-dev.sfaconstruction.net/v1/graphql'
+    Description: 'Auth0 API identifier of Frontend app, example: https://api-dev.sfaconstruction.net/'
+    Default: ''
 
   APPCertificateARN:
-    Description: Arn of the main APP.<domain>, must be in east-1 region
+    Description: 'Arn of the main APP.<domain>, must be in east-1 region, example: arn:aws:acm:us-east-1:232267884965:certificate/a5e33ca5-ed0e-4e02-a932-3967293590e8'
     Type: String
-    Default: 'arn:aws:acm:us-east-1:232267884965:certificate/a5e33ca5-ed0e-4e02-a932-3967293590e8'
+    Default: ''
     AllowedPattern: "arn:aws:acm:us-east-1:.*"
+
   APICertificateARN:
-    Description: Arn of the main API.<domain>
+    Description: 'Arn of the main API.<domain>, must be in the deployment region, example: arn:aws:acm:us-west-1:232267884965:certificate/49c55b77-6742-46e5-9d6a-0bc79f27b930'
     Type: String
-    Default: 'arn:aws:acm:us-west-1:232267884965:certificate/49c55b77-6742-46e5-9d6a-0bc79f27b930'
+    Default: ''
     AllowedPattern: "arn:aws:acm:.*"
 
   DBEndpoint:
-    Description: 'The endpoint for PostgreSQL'
+    Description: 'The endpoint for PostgreSQL, example: devpostgres.cvde1gulz0vk.us-west-1.rds.amazonaws.com'
     Type: String
-    Default: 'devpostgres.cvde1gulz0vk.us-west-1.rds.amazonaws.com'
+    Default: ''
+
   DBUsername:
-    Description: 'The DB username that will be used for the root admin user in PostgreSQL'
+    Description: 'The DB username that will be used for the Django user in PostgreSQL'
     Type: String
     Default: 'sfa_dev'
 
@@ -61,14 +64,14 @@ Parameters:
     Default: 'sfa_dev'
 
   HasuraDBUsername:
-    Description: 'The DB username that will be used for hasura, with only select\update permissions in PostgreSQL'
+    Description: 'The DB username that will be used for Hasura in PostgreSQL'
     Type: String
     Default: 'sfa_dev_hasura'
 
   RedisHost:
-    Description: 'The hostname of the Redis database'
+    Description: 'The hostname of the Redis database, example: stagingnew.xlvwpc.clustercfg.memorydb.us-west-1.amazonaws.com'
     Type: String
-    Default: 'stagingnew.xlvwpc.clustercfg.memorydb.us-west-1.amazonaws.com'
+    Default: ''
     AllowedPattern: "[^:]*"
 
   RedisPort:
@@ -77,36 +80,24 @@ Parameters:
     Default: '6379'
 
   HasuraDockerImage:
-    Description: 'Name and tag of the Hasura Docker Image'
+    Description: 'Name and tag of the Hasura Docker Image, example for dev: hasura/graphql-engine:v2.24.1, example for staging: 232267884965.dkr.ecr.us-west-1.amazonaws.com/sfa/hasura-staging:latest'
     Type: String
-    Default: '232267884965.dkr.ecr.us-west-1.amazonaws.com/sfa/hasura-staging:latest'
+    Default: 'hasura/graphql-engine:v2.24.1'
 
   DjangoDockerImage:
-    Description: 'Name and tag of the Django Docker Image'
+    Description: 'Name and tag of the Django Docker Image, example: 232267884965.dkr.ecr.us-west-1.amazonaws.com/sfa/django-app-staging:latest'
     Type: String
-    Default: '232267884965.dkr.ecr.us-west-1.amazonaws.com/sfa/django-app-staging:latest'
+    Default: ''
 
   StorageDockerImage:
-    Description: 'Name and tag of the Storage API Docker Image'
+    Description: 'Leave as default; Name and tag of the Storage API Docker Image'
     Type: String
     Default: 'nhost/hasura-storage:0.3.6'
 
   HasuraHealthCheckPath:
-    Description: 'The Health check path. Hasura exposes /healthz as a health check path. Used on the LoadBalancing Target group.'
+    Description: 'Leave as default; The Health check path. Hasura exposes /healthz as a health check path. Used on the LoadBalancing Target group.'
     Type: String
     Default: /healthz
-  MinContainers:
-    Description: 'for autoscaling'
-    Type: Number
-    Default: 1
-  MaxContainers:
-    Description: 'for autoscaling'
-    Type: Number
-    Default: 10
-  AutoScalingTargetValue:
-    Description: 'target CPU utilization (%)'
-    Type: Number
-    Default: 80
 
   HasuraAWSSecretName:
     Description: 'The NAME of a secret in AWS Secret manager containing Hasura related secrets'
@@ -114,24 +105,24 @@ Parameters:
     Default: 'hasura-secret'
 
   HasuraAWSSecretArn:
-    Description: 'The ARN of a secret in AWS Secret manager containing Hasura related secrets'
+    Description: 'The ARN of a secret in AWS Secret manager containing Hasura related secrets, can be shared with Django secret'
     Type: String
     Default: 'arn:aws:secretsmanager:'
     AllowedPattern: 'arn:aws:secretsmanager:.*'
 
   DjangoAWSSecretArn:
-    Description: 'The ARN of a secret in AWS Secret manager containing Django related secrets'
+    Description: 'The ARN of a secret in AWS Secret manager containing Django related secrets, can be shared with Hasura secret'
     Type: String
     Default: 'arn:aws:secretsmanager:'
     AllowedPattern: 'arn:aws:secretsmanager:.*'
 
   OneSignalAppId:
-    Description: 'App ID for OneSignal integration'
+    Description: 'Optional; App ID for OneSignal integration'
     Type: String
     Default: ''
 
   OneSignalTwilioFromNumber:
-    Description: 'Twilio phone number used for outgoing sms, must be linked to onesignal account'
+    Description: 'Optional; Twilio phone number used for outgoing sms, must be linked to onesignal account'
     Type: String
     Default: ''
 
@@ -141,7 +132,7 @@ Parameters:
     Default: 'vpc-0813c9d5475677cd8'
   VpcCIDR:
     Type: String
-    Description: "VPC's CIDR"
+    Description: "VPC's CIDR that was specified when VPC was created"
     Default: '10.20.0.0/16'
   VpcPublicSubnetA:
     Type: AWS::EC2::Subnet::Id
@@ -153,11 +144,11 @@ Parameters:
     Default: 'subnet-0628998114fa9b80f'
   VpcPrivateSubnetA:
     Type: AWS::EC2::Subnet::Id
-    Description: List of 2 private SubnetIds for the given VPC.
+    Description: 'FIRST **Private** Subnet Id for the given VPC.'
     Default: 'subnet-0e1edb91d06782376'
   VpcPrivateSubnetB:
     Type: AWS::EC2::Subnet::Id
-    Description: 'B'
+    Description: 'SECOND **Private** Subnet Id for the given VPC.'
     Default: 'subnet-0f2e3ae9b28fa4da2'
   RDSSecurityGroupID:
     Type: AWS::EC2::SecurityGroup::Id
@@ -170,17 +161,12 @@ Parameters:
 
   PlaidEnv:
     Type: String
-    Description: 'Optional; Plaid env, Sandbox,Development,Production'
+    Description: 'Optional if using Plaid; Plaid env, Sandbox,Development,Production'
     Default: 'Sandbox'
 
   TwilioVerifyServiceId:
     Type: String
-    Description: 'Optional; TWILIO_VERIFY_SID value'
-    Default: ''
-
-  KMSFeBeKeyID:
-    Type: String
-    Description: 'Optional; Key ID / ARN / alias for encrypting/decrypting data send from BE'
+    Description: 'Optional; TWILIO_VERIFY_SID value; Get this value from Twilio after creating a "verify service", used to verify phone numbers'
     Default: ''
 
 Mappings:
@@ -341,20 +327,6 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: 'sts:AssumeRole'
-
-  # A role needed for autoscaling
-  AutoScalingRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Join [ '-', [ !Ref APIName, AutoScalingRole ] ]
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
 
   AppLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -568,33 +540,6 @@ Resources:
             - "/da/*"
       ListenerArn: !Ref ALBListenerHTTPS
       Priority: 1
-
-  # FIXME: this autoscaling thingi does not work...?!
-  HasuraAutoScalingTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    Properties:
-      MinCapacity: !Ref MinContainers
-      MaxCapacity: !Ref MaxContainers
-      ResourceId: !Join [ '/', [ service, !Ref ECSCluster, !GetAtt HasuraService.Name ] ]
-      ScalableDimension: ecs:service:DesiredCount
-      ServiceNamespace: ecs
-      # "The Amazon Resource Name (ARN) of an AWS Identity and Access Management (IAM) role that allows Application Auto Scaling to modify your scalable target."
-      RoleARN: !GetAtt AutoScalingRole.Arn
-
-  # FIXME: this autoscaling thingi does not work...?!
-  AutoScalingPolicy:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    Properties:
-      PolicyName: !Join [ '-', [ !Ref APIName, AutoScalingPolicy ] ]
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref HasuraAutoScalingTarget
-      TargetTrackingScalingPolicyConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: ECSServiceAverageCPUUtilization
-        ScaleInCooldown: 10
-        ScaleOutCooldown: 10
-        # Keep things at or lower than 50% CPU utilization, for example
-        TargetValue: !Ref AutoScalingTargetValue
 
   DjangoLogGroup:
     Type: AWS::Logs::LogGroup

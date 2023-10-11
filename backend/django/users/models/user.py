@@ -1,6 +1,7 @@
 import onesignal.model.notification
 from django.apps import apps
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models import UniqueConstraint, Q
 
@@ -19,6 +20,10 @@ class User(BaseModel):
     phone_number = models.CharField(max_length=20, null=True)
     email = models.CharField(max_length=200, null=True)
     phone_verified = models.BooleanField(default=False)
+    email_verified = models.BooleanField(default=False)
+
+    blocked = models.BooleanField(default=False)
+
 
     def send_push_notification(self, title, message, badge_type='SetTo', badge_count=1, **kwargs):
         notification = onesignal.model.notification.Notification(
@@ -52,4 +57,15 @@ class User(BaseModel):
             **kwargs
         )
         return apps.get_app_config('django_app').os_client.create_notification(notification=notification)
+
+
+class Employee(BaseModel):
+    email = models.CharField(max_length=100, null=False, unique=True)
+    role = models.CharField(max_length=100, null=False)
+    user = models.OneToOneField(User, on_delete=models.PROTECT, null=True)
+
+    first_name = models.CharField(max_length=150, null=True)
+    last_name = models.CharField(max_length=150, null=True)
+
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, null=True, related_name='%(class)s_created_by')
 

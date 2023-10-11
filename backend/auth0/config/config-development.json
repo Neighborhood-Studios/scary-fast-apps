@@ -1,0 +1,10 @@
+{
+  "AUTH0_DOMAIN": "****.us.auth0.com",
+  "AUTH0_CLIENT_ID": "44G***",
+
+  "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
+    "ENV": "dev",
+    "ALLOWED_ORIGINS_ADMIN_APP": ["http://localhost:4200/admin/", "https://app-dev.sfaconstruction.com/admin/"],
+    "ALLOWED_ORIGINS": ["http://localhost:4200/", "https://app-dev.sfaconstruction.com/"]
+  }
+}

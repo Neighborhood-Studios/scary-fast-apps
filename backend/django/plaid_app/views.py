@@ -88,9 +88,13 @@ def update_link_token(request):
     if not serializer.is_valid():
         return JsonResponse(serializer.errors, status=400)
 
-    link_data = PlaidLink.objects.get(user_id=initiator_user_id)
-    if not link_data.permanent_token:
+    try:
+        link_data = PlaidLink.objects.get(user_id=initiator_user_id)
+    except PlaidLink.DoesNotExist:
+        link_data = None
+    if link_data is None or not link_data.permanent_token:
         return JsonResponse({'status': 'not connected'}, status=400)
+
     plaid_user_id = str(link_data.plaid_user_id)
 
     redirect_url = serializer.validated_data['redirect_uri'] or 'https://%s/plaid' % settings.APP_DOMAIN_NAME
@@ -129,7 +133,13 @@ def exchange_public_token(request):
     payload = jwt.decode(token, options={'verify_signature': False})
     initiator_user_id = payload.get('sub')
 
-    link_data = PlaidLink.objects.get(user_id=initiator_user_id)
+    try:
+        link_data = PlaidLink.objects.get(user_id=initiator_user_id)
+    except PlaidLink.DoesNotExist:
+        link_data = None
+    if link_data is None:
+        return JsonResponse({'status': 'link not initialized'}, status=400)
+
     # investordata = link_data.user.investordata
 
     serializer = ExchangeLinkSerializer(data=request.data)
@@ -171,8 +181,11 @@ def get_balance(request):
     payload = jwt.decode(token, options={'verify_signature': False})
     initiator_user_id = payload.get('sub')
 
-    link_data = PlaidLink.objects.get(user_id=initiator_user_id)
-    if not link_data.permanent_token:
+    try:
+        link_data = PlaidLink.objects.get(user_id=initiator_user_id)
+    except PlaidLink.DoesNotExist:
+        link_data = None
+    if link_data is None or not link_data.permanent_token:
         return JsonResponse({'status': 'not connected'}, status=400)
 
     try:
@@ -196,8 +209,11 @@ def get_accounts(request):
     payload = jwt.decode(token, options={'verify_signature': False})
     initiator_user_id = payload.get('sub')
 
-    link_data = PlaidLink.objects.get(user_id=initiator_user_id)
-    if not link_data.permanent_token:
+    try:
+        link_data = PlaidLink.objects.get(user_id=initiator_user_id)
+    except PlaidLink.DoesNotExist:
+        link_data = None
+    if link_data is None or not link_data.permanent_token:
         return JsonResponse({'status': 'not connected'}, status=400)
 
     try:
@@ -220,9 +236,11 @@ def get_item(request):
 
     payload = jwt.decode(token, options={'verify_signature': False})
     initiator_user_id = payload.get('sub')
-
-    link_data = PlaidLink.objects.get(user_id=initiator_user_id)
-    if not link_data.permanent_token:
+    try:
+        link_data = PlaidLink.objects.get(user_id=initiator_user_id)
+    except PlaidLink.DoesNotExist:
+        link_data = None
+    if link_data is None or not link_data.permanent_token:
         return JsonResponse({'status': 'not connected'}, status=400)
 
     try:
