@@ -40,15 +40,25 @@ configuration:
     update: updateBuckets
     update_by_pk: updateBucket
 array_relationships:
-  - name: storage_files
+  - name: storage_buckets_storage_files
     using:
-      foreign_key_constraint_on:
-        column: bucket_id
-        table:
+      manual_configuration:
+        column_mapping:
+          id: bucket_id
+        insertion_order: null
+        remote_table:
           name: storage_files
           schema: public
 select_permissions:
   - role: manager
     permission:
-      columns: []
+      columns:
+        - presigned_urls_enabled
+        - cache_control
+        - id
+        - download_expiration
+        - max_upload_file_size
+        - min_upload_file_size
+        - created_at
+        - updated_at
       filter: {}

@@ -1,0 +1,17 @@
+{
+  "name": "sfa_auth0",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "export": "dotenv -c -- a0deploy export --strip --format yaml --output_folder local --config_file ./config/config-${ENV:-development}.json",
+    "deploy": "dotenv -c -- a0deploy import --input_file local/tenant.yaml --config_file ./config/config-${ENV:-development}.json"
+  },
+  "keywords": [],
+  "author": "sfa",
+  "license": "ISC",
+  "dependencies": {
+    "auth0-deploy-cli": "^7.19.0",
+    "dotenv": "^16.3.1"
+  }
+}

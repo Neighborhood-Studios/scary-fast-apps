@@ -58,10 +58,26 @@ def assign_role(request):
 
     allowed = False
     target_role_order = RoleOrder.objects.get(role_name=target_role_name)
+    highest_initiator_roleorder = None
     for role_order in RoleOrder.objects.filter(role_name__in=initiator_roles, can_assign=True):
+        highest_initiator_roleorder = min(role_order.order, highest_initiator_roleorder)
         if role_order.order <= target_role_order.order:
             allowed = True
             break
+
+    if not allowed:
+        return JsonResponse({'role_name': 'You do not have permissions for this actions'}, status=400)
+
+    target_roles = []
+    for role in mapi.get_user_roles(target_user_id):
+        target_roles.append(role['name'])
+
+    allowed = True
+    for role_order in RoleOrder.objects.filter(role_name__in=target_roles):
+        if role_order.order <= highest_initiator_roleorder:
+            allowed = False
+            break
+
     if not allowed:
         return JsonResponse({'role_name': 'You do not have permissions for this actions'}, status=400)
 
@@ -69,9 +85,45 @@ def assign_role(request):
     for role in mapi.get_roles_list():
         if role['name'] == target_role_name:
             mapi.assign_role_to_user(target_user_id, role['id'])
-            break
+        elif role['name'] in target_roles:
+            # remove all other roles
+            mapi.remove_role_from_user(target_user_id, role['id'])
 
     return JsonResponse({'status': 'successful'})
+
+
+@api_view(['GET'])
+def list_roles(request):
+    token = get_token_auth_header(request)
+    if not token:
+        return HttpResponseNotFound()
+
+    payload = jwt.decode(token, options={'verify_signature': False})
+    initiator_user_id = payload.get('sub')
+
+    logging.info('token payload: %s', payload)
+
+    mapi = ManagementAPI(settings.AUTH0_MANAGEMENT_CLIENT_ID,
+                         settings.AUTH0_MANAGEMENT_CLIENT_SECRET,
+                         settings.AUTH0_DOMAIN)
+
+    initiator_roles = []
+    for role in mapi.get_user_roles(initiator_user_id):
+        initiator_roles.append(role['name'])
+
+    # TODO: remove hardcode? "admin roles"?
+    if not set(initiator_roles).intersection({'manager', 'admin'}):
+        return HttpResponseNotFound()
+    roles = mapi.get_roles_list()
+    result = [
+        {
+            'name': x['name'],
+            'description': x['description']
+        }
+        for x in roles
+    ]
+
+    return JsonResponse({'status': 'successful', 'roles': result})
 
 
 @api_view(['POST'])

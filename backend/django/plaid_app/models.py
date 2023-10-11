@@ -69,8 +69,6 @@ class Investment(BaseModel):
 
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=False)
 
-    active = models.BooleanField(default=True)
-
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
 
     transaction_id = models.OneToOneField(PlaidTransfer, null=True, unique=True, on_delete=models.PROTECT)
