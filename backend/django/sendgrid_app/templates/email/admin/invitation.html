@@ -1,0 +1,6 @@
+{% extends "email/base-email.html" %}
+
+{% block email-content %}
+	<p>Welcome to <PROJECT_NAME> Admin panel</p>
+  <p><a href="{{ app_link | safe }}">{{ app_link }}</a></p>
+{% endblock %}

@@ -1,4 +1,4 @@
-FROM hasura/graphql-engine:v2.24.1.cli-migrations-v3
+FROM hasura/graphql-engine:v2.36.2.cli-migrations-v3
 
 ARG COMMIT_SHA
 ARG COMMIT_TITLE

@@ -1,10 +1,27 @@
 {
-  "AUTH0_DOMAIN": "****.us.auth0.com",
-  "AUTH0_CLIENT_ID": "44G***",
+  "AUTH0_DOMAIN": "dev-<PROJECT_NAME>.us.auth0.com",
+  "AUTH0_CLIENT_ID": "<TBD>",
+  "AUTH0_ALLOW_DELETE": true,
 
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
     "ENV": "dev",
-    "ALLOWED_ORIGINS_ADMIN_APP": ["http://localhost:4200/admin/", "https://app-dev.sfaconstruction.com/admin/"],
-    "ALLOWED_ORIGINS": ["http://localhost:4200/", "https://app-dev.sfaconstruction.com/"]
+    "FRIENDLY_NAME": "<PROJECT_NAME> DEV",
+    "SUPPORT_URL": "https://app-dev.<PROJECT_NAME>.com",
+    "SUPPORT_EMAIL": "support@<PROJECT_NAME>.com",
+    "MANAGEMENT_API_AUDIENCE": "https://dev-<PROJECT_NAME>.us.auth0.com/api/v2/",
+    "FE_INSTANCE": "https://app-dev.<PROJECT_NAME>.com",
+    "LOGO_URL_ADMIN": "https://app-dev.<PROJECT_NAME>.com/logo.png",
+    "LOGO_URL_APP": "https://app-dev.<PROJECT_NAME>.com/logo-app.png",
+    "MAIN_API_AUDIENCE": "https://api-dev.<PROJECT_NAME>.com",
+    "ALLOWED_ORIGINS_ADMIN_APP": [
+      "https://app-dev.<PROJECT_NAME>.com/admin",
+      "http://localhost:4200/admin",
+      "https://app-local.<PROJECT_NAME>.com/admin",
+    ],
+    "ALLOWED_ORIGINS": [
+      "https://app-dev.<PROJECT_NAME>.com",
+      "http://localhost:4200",
+      "https://app-local.<PROJECT_NAME>.com"
+    ]
   }
 }

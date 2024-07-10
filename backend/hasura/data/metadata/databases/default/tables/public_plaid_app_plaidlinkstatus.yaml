@@ -1,0 +1,4 @@
+table:
+  name: plaid_app_plaidlinkstatus
+  schema: public
+is_enum: true

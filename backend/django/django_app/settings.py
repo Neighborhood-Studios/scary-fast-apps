@@ -9,21 +9,25 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import logging
 import os
+from pathlib import Path
 
 import dotenv
-import sentry_sdk
 import sentry_sdk.utils
-
-from pathlib import Path
 from corsheaders.defaults import default_headers
 
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+IS_PROD = ENVIRONMENT == 'production'
+
+if ENVIRONMENT == 'local':
+    logging.basicConfig(level=logging.DEBUG)
 if os.getenv('SENTRY_DSN'):
     _sentry_env = os.getenv('SENTRY_ENV', 'development')
     sentry_sdk.init(
         dsn=os.getenv('SENTRY_DSN'),
         traces_sample_rate=1.0,  # can be reduced in prod...
-        environment=os.getenv('SENTRY_ENV', 'development'),
+        environment=_sentry_env,
         send_default_pii=True if _sentry_env != 'production' else False,
         attach_stacktrace=True,
         max_value_length=4096,
@@ -38,10 +42,10 @@ dotenv.read_dotenv(BASE_DIR, True)
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-zamzfbodhhn2p_p)m7=pzzz^j4kosi0)q6gk_4_%^hl_y%hyuc'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '^_^')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG') == 'True'
+DEBUG = os.getenv('DEBUG') == 'True' or os.getenv('ENVIRONMENT') == 'development'
 
 ALLOWED_HOSTS = [os.getenv("API_DOMAIN_NAME")]
 
@@ -52,10 +56,15 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.RemoteUserBackend',
 ]
 
-# auth0
-AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")  # 'dev-jnso8xn6b1daq18g.us.auth0.com'
-AUTH0_API_IDENTIFIER = os.getenv("AUTH0_API_IDENTIFIER")  # 'https://api-staging.sfaconstruction.net'
+AUTH_USER_MODEL = 'users.User'
 
+# auth0
+AUTH0_ORIGINAL_DOMAIN = os.getenv("AUTH0_DOMAIN")  # 'dev-jnso8xn6b1daq18g.us.auth0.com'
+AUTH0_CUSTOM_DOMAIN = os.getenv("AUTH0_CUSTOM_DOMAIN")  # Auth0 'custom domain'
+AUTH0_DOMAIN = AUTH0_CUSTOM_DOMAIN if AUTH0_CUSTOM_DOMAIN else AUTH0_ORIGINAL_DOMAIN
+AUTH0_API_IDENTIFIER = os.getenv("AUTH0_API_IDENTIFIER")  # 'https://api-staging....'
+
+AUTH0_MANAGEMENT_CLIENT_DOMAIN = AUTH0_ORIGINAL_DOMAIN  # Auth0 management application domain
 AUTH0_MANAGEMENT_CLIENT_SECRET = os.getenv("AUTH0_MANAGEMENT_CLIENT_SECRET")
 AUTH0_MANAGEMENT_CLIENT_ID = os.getenv("AUTH0_MANAGEMENT_CLIENT_ID")
 
@@ -66,15 +75,36 @@ ONESIGNAL_APP_ID = os.getenv("ONESIGNAL_APP_ID")
 # see https://documentation.onesignal.com/docs/twilio-setup
 ONESIGNAL_TWILIO_FROM_NUMBER = os.getenv("ONESIGNAL_TWILIO_FROM_NUMBER")
 
+# SendGrid
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+
+SUPPORT_EMAIL = os.getenv('SUPPORT_EMAIL', 'support@<PROJECT_NAME>.com')
+ADMIN_NOTIFICATIONS_EMAIL = os.getenv('ADMIN_NOTIFICATIONS_EMAIL', 'support@<PROJECT_NAME>.com')
+SUPPORT_NAME = os.getenv('SUPPORT_NAME', '<PROJECT_NAME> Support')
+
+# Plaid payments processing
 PLAID_CLIENT_ID = os.getenv("PLAID_CLIENT_ID")
 PLAID_SECRET = os.getenv("PLAID_SECRET")
 PLAID_APP_NAME = os.getenv("PLAID_APP_NAME", 'SFA')
 PLAID_ENV = os.getenv("PLAID_ENV", 'Sandbox')
 
+# TreasuryPrime payments processing
+TREASURY_PRIME_API_ENDPOINT = os.getenv('TREASURY_PRIME_API_ENDPOINT')
+TREASURY_PRIME_API_KEY_ID = os.getenv('TREASURY_PRIME_API_KEY_ID')
+TREASURY_PRIME_API_SECRET_KEY = os.getenv('TREASURY_PRIME_API_SECRET_KEY')
+TREASURY_PRIME_WEBHOOK_USERNAME = os.getenv('TREASURY_PRIME_WEBHOOK_USERNAME')
+TREASURY_PRIME_WEBHOOK_PASSWORD = os.getenv('TREASURY_PRIME_WEBHOOK_PASSWORD')
+
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_VERIFY_SID = os.getenv("TWILIO_VERIFY_SID")
+TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER")
 
+COMET_CHAT_API_URL = os.getenv("COMET_CHAT_API_URL")
+COMET_CHAT_REST_KEY = os.getenv("COMET_CHAT_REST_KEY")
+
+STRIPE_API_KEY = os.getenv("STRIPE_API_KEY")
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
 
 CORS_ALLOWED_ORIGINS = [
     'https://%s' % APP_DOMAIN_NAME,
@@ -101,13 +131,19 @@ INSTALLED_APPS = [
     'django_extensions',
 
     'rest_framework',
+    'push_notifications',
 
     'django_app.apps.DjangoAppConfig',
     'core_utils.apps.CoreUtilsConfig',
     'users.apps.UsersConfig',
-    'storage.apps.StorageConfig',
     'plaid_app.apps.PlaidAppConfig',
-    'twilio_app.apps.TwilioAppConfig',
+    'treasuryprime_app.apps.TreasuryprimeAppConfig',
+    'signwell.apps.SignwellConfig',
+    'storage.apps.StorageConfig',
+    'sendgrid_app.apps.SendgridConfig',
+    'comet_chat.apps.CometChatConfig',
+    'stripe_app.apps.StripeAppConfig',
+    'expo_notifications.apps.ExpoNotificationsConfig',
 ]
 
 MIDDLEWARE = [
@@ -182,6 +218,7 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
+        'core_utils.permissions.HasRole',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
@@ -197,6 +234,19 @@ JWT_AUTH = {
     'JWT_ISSUER': 'https://%s/' % AUTH0_DOMAIN,
     'JWT_AUTH_HEADER_PREFIX': 'Bearer',
 }
+
+PUSH_NOTIFICATIONS_SETTINGS = {
+    # "APNS_CERTIFICATE": _apns_path,
+    # "APNS_TOPIC": os.getenv('APNS_TOPIC'),
+
+    'USER_MODEL': 'users.User'
+}
+EXPO_NOTIFICATIONS_TOKEN = os.getenv('EXPO_NOTIFICATIONS_TOKEN')
+
+
+SIGNWELL_API_KEY = os.getenv('SIGNWELL_API_KEY')
+SIGNWELL_API_APP_ID = os.getenv('SIGNWELL_API_APP_ID')
+SIGNWELL_WEBHOOK_KEY = os.getenv('SIGNWELL_WEBHOOK_KEY')
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -245,6 +295,11 @@ DRAMATIQ_BROKER = {
 }
 DRAMATIQ_TASKS_DATABASE = 'default'
 DRAMATIQ_AUTODISCOVER_MODULES = ["tasks"]
+
+# can be used to prevent multiple crons from running
+# DRAMATIQ_CRONTAB = {
+#     "REDIS_URL": "redis://%s:%s/9" % (DRAMATIQ_REDIS_HOST, DRAMATIQ_REDIS_PORT),
+# }
 
 LOGGING = {
     'version': 1,

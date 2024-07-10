@@ -1,5 +1,5 @@
 {
-  "name": "sfa_auth0",
+  "name": "@sfa/auth0",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,7 +11,7 @@
   "author": "sfa",
   "license": "ISC",
   "dependencies": {
-    "auth0-deploy-cli": "^7.19.0",
-    "dotenv": "^16.3.1"
+    "auth0-deploy-cli": "^7.21.0",
+    "dotenv-cli": "^7.4.1"
   }
 }

@@ -12,8 +12,16 @@ from rest_framework.decorators import api_view
 from twilio.base.exceptions import TwilioRestException
 from twilio.rest import Client
 
+from core_utils.utils import make_redis_key
 from core_utils.view_utils import get_token_auth_header
 from users.models.user import User
+
+RESENT_TIMEOUT = 60  # seconds
+
+_USER_ROLE_USER = 'user'
+USER_ROLES = (
+    (_USER_ROLE_USER, 'User'),
+)
 
 
 class RequestVerifySerializer(serializers.Serializer):
@@ -23,9 +31,7 @@ class RequestVerifySerializer(serializers.Serializer):
 class VerifySerializer(serializers.Serializer):
     phone_number = serializers.CharField(max_length=100)
     otp_code = serializers.CharField(max_length=100)
-
-
-RESENT_TIMEOUT = 60  # seconds
+    user_role = serializers.ChoiceField(choices=USER_ROLES, allow_blank=False)
 
 
 @api_view(['POST'])
@@ -48,7 +54,7 @@ def verify_phone_request(request):
     phone_number = serializer.validated_data['phone_number']
 
     redis_client = apps.get_app_config('django_app').redis
-    lock = redis.lock.Lock(redis=redis_client, name='user_verify_%s' % phone_number,
+    lock = redis.lock.Lock(redis=redis_client, name=make_redis_key('user_verify_%s' % phone_number),
                            timeout=30, blocking_timeout=30)
     with lock:
         rate_limit = WindowRateLimiter(key='rl_user_verify_%s' % phone_number, backend=redis_client, limit=2,
@@ -84,9 +90,9 @@ def verify_phone(request):
     user = User.objects.get(auth0id=initiator_user_id)
 
     redis_client = apps.get_app_config('django_app').redis
-    lock = redis.lock.Lock(redis=redis_client, name='user_verify_%s' % user.phone_number,
+    lock = redis.lock.Lock(redis=redis_client, name=make_redis_key('user_verify_%s' % user.phone_number),
                            timeout=30, blocking_timeout=30)
-    with lock:
+    with (lock):
         serializer = VerifySerializer(data=request.data)
         if not serializer.is_valid():
             return JsonResponse(serializer.errors, status=400)
@@ -96,8 +102,10 @@ def verify_phone(request):
         verify_service = client.verify.v2.services(settings.TWILIO_VERIFY_SID)
 
         try:
-            verification_check = verify_service.verification_checks.create(to=phone_number,
-                                                                           code=serializer.validated_data['otp_code'])
+            verification_check = verify_service.verification_checks.create(
+                to=phone_number,
+                code=serializer.validated_data['otp_code'],
+            )
         except TwilioRestException as e:
             if e.status == 429:
                 return JsonResponse({'status': 'too many requests'}, status=429)
@@ -111,12 +119,15 @@ def verify_phone(request):
         if verification_check.status == 'approved':
             user.phone_number = phone_number
             user.phone_verified = True
+
             try:
                 user.save()
             except (InternalError, IntegrityError) as e:
                 if 'user_verified_phone_number_uniq' in str(e):
                     return JsonResponse({'status': 'phone is already in use'}, status=400)
+
                 logging.exception('Unhandled exception while saving user: %s', e)
+
                 return JsonResponse({'status': 'internal error'}, status=500)
 
-        return JsonResponse({'status': verification_check.status})
+        return JsonResponse({'status': verification_check.status}, status=200)

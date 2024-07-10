@@ -1,0 +1,13 @@
+
+CHARGE_STATUS_SUCCEEDED = 'succeeded'
+CHARGE_STATUS_PENDING = 'pending'
+CHARGE_STATUS_FAILED = 'failed'
+
+
+PAY_INTENT_STATUS_REQ_PAY_METHOD = 'requires_payment_method'
+PAY_INTENT_STATUS_REQ_CONFIRMATION = 'requires_confirmation'
+PAY_INTENT_STATUS_REQ_ACTION = 'requires_action'
+PAY_INTENT_STATUS_REQ_CAPTURE = 'requires_capture'
+PAY_INTENT_STATUS_PROCESSING = 'processing'
+PAY_INTENT_STATUS_CANCELED = 'canceled'
+PAY_INTENT_STATUS_SUCCEEDED = 'succeeded'

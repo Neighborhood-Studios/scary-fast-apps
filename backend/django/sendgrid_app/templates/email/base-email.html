@@ -1,0 +1,52 @@
+<table>
+  <tr>
+    <td width="20%"></td>
+    <td>
+      <p
+        style="
+          text-align: center;
+          -webkit-text-size-adjust: 100%;
+          -ms-text-size-adjust: 100%;
+          margin-bottom: 30px;
+        "
+      >
+        <img
+          src="https://{{ app_domain_name }}/logo.png"
+          width="50"
+          height="50"
+          alt="logo"
+          style="
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+          "
+        />
+        <br/>
+        <strong><PROJECT_NAME></strong>
+        <br/>
+      </p>
+    </td>
+    <td width="20%"></td>
+  </tr>
+  <tr>
+    <td width="20%"></td>
+    <td>{% block email-content %} {% endblock %}</td>
+    <td width="20%"></td>
+  </tr>
+  <tr>
+    <td width="20%"></td>
+    <td>
+      <br />
+      {% block email-footer %}
+        <br />
+        <strong>- <PROJECT_NAME> Team</strong>
+        <br/>
+        <a href="mailto:{{ support_email | safe }}">{{ support_email }}</a>
+      {% endblock %}
+    </td>
+    <td width="20%"></td>
+  </tr>
+</table>

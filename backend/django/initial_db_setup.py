@@ -1,8 +1,8 @@
-import psycopg2
-import psycopg2.extensions
-import psycopg2.errors
-
 from string import Template
+
+import psycopg2
+import psycopg2.errors
+import psycopg2.extensions
 
 # defaults
 DEFAULTS = dict(
@@ -140,6 +140,11 @@ def main():
 
         sql = Template(DB_TEMPLATE_2).substitute(subs)
         print('\nexecuting %s' % sql)
+        try:
+            cursor.execute(sql)
+        except psycopg2.errors.DuplicateObject:
+            print('WARNING: USER(S) ALREADY EXIST')
+
     connection.close()
 
 
