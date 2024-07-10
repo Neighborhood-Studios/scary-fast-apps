@@ -1,0 +1,13 @@
+table:
+  name: users_roleorder
+  schema: public
+select_permissions:
+  - role: manager
+    permission:
+      columns:
+        - can_assign
+        - can_remove
+        - id
+        - order
+        - role_name
+      filter: {}

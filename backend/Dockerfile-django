@@ -1,6 +1,6 @@
 FROM tiangolo/uwsgi-nginx:python3.11
 
-RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests bash git libpq-dev curl make
+RUN apt-get -y update && apt-get -y install --no-install-recommends --no-install-suggests bash git libpq-dev curl make
 
 ENV LISTEN_PORT 8080
 EXPOSE 8080

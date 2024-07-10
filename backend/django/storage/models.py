@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Model
 
 import users.models.user
 from core_utils.models import BaseModel
@@ -7,7 +8,7 @@ from core_utils.models import BaseModel
 # Create your models here.
 
 
-class Buckets(BaseModel):
+class Buckets(Model):
     id = models.CharField(max_length=200, null=False, primary_key=True)
 
     download_expiration = models.PositiveIntegerField(default=30, null=False)
@@ -16,8 +17,11 @@ class Buckets(BaseModel):
     cache_control = models.CharField(default='max-age=3600', null=False)
     presigned_urls_enabled = models.BooleanField(default=True, null=False)
 
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
-class Files(BaseModel):
+
+class Files(Model):
     id = models.UUIDField(primary_key=True)
     bucket = models.ForeignKey(Buckets, on_delete=models.CASCADE, null=False)
     name = models.TextField(null=True)
@@ -27,3 +31,6 @@ class Files(BaseModel):
 
     is_uploaded = models.BooleanField(default=False, null=True)
     uploaded_by_user = models.ForeignKey(users.models.user.User, null=True, on_delete=models.CASCADE)
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
