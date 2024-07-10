@@ -1,7 +1,7 @@
-django==4.2.5
+django==4.2.13
 psycopg2-binary==2.9.7
-dramatiq==1.14.2
-django-dramatiq==0.11.5
+dramatiq==1.17.0
+django-dramatiq==0.11.6
 django-dotenv==1.4.2
 redis==4.6.0
 boto3==1.28.44
@@ -9,15 +9,15 @@ django-extensions==3.2.3
 requests==2.31.0
 django-add-default-value==0.10.0
 onesignal-python-api==2.0.2
-plaid-python==15.5.0
 twilio==8.5.0
 apscheduler==3.10.4
 dramatiq-crontab==1.0.3
-sentry-sdk==1.30.0
+sentry-sdk==2.4.0
+plaid-python==18.4.0
 
 cryptography==41.0.3
-djangorestframework==3.14.0
-django-cors-headers==4.2.0
+djangorestframework==3.15.2
+django-cors-headers==4.4.0
 drf-jwt==1.19.2
 pyjwt==2.8.0
 
@@ -35,9 +35,6 @@ tzlocal==5.0.1
 cffi==1.15.1
 pycparser==2.21
 
-# plaid
-nulltype==2.3.1
-
 # twilio
 aiohttp==3.8.5
 aiohttp-retry==2.8.3
@@ -46,3 +43,27 @@ attrs==23.1.0
 frozenlist==1.4.0
 multidict==6.0.4
 yarl==1.9.2
+
+# plaid
+nulltype==2.3.1
+
+# sendgrid
+sendgrid==6.11.0
+python-http-client==3.3.7
+starkbank-ecdsa==2.2.0
+
+# stripe
+stripe~=8.10.0
+typing-extensions==4.11.0
+
+# django-push-notifications[APNS,FCM]
+django-push-notifications[APNS,FCM]==3.0.2
+# PyJWT==1.7.1
+apns2==0.7.1
+h2==2.6.2
+hpack==3.0.0
+hyper==0.7.0
+hyperframe==3.2.0
+
+# Expo notifications
+exponent_server_sdk==2.1.0

@@ -1,5 +1,5 @@
 {
-  "name": "sfa_hasura",
+  "name": "@sfa/hasura",
   "version": "1.0.0",
   "description": "Hasura export/deploy cli",
   "main": "index.js",
@@ -7,12 +7,12 @@
     "export": "dotenv -c -- hasura metadata export --skip-update-check --project 'data'",
     "diff": "dotenv -c -- hasura metadata diff --skip-update-check --project 'data'",
     "deploy": "dotenv -c -- hasura metadata apply --skip-update-check --project 'data'",
-    "postinstall": "hasura update-cli --project 'data'"
+    "update-cli": "hasura update-cli"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "dotenv": "^16.3.1",
-    "hasura-cli": "^2.11.12"
+    "dotenv-cli": "^7.4.1",
+    "hasura-cli": "2.11.12"
   }
 }

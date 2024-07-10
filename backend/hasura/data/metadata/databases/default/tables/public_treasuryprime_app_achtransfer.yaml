@@ -1,0 +1,15 @@
+table:
+  name: treasuryprime_app_achtransfer
+  schema: public
+object_relationships:
+  - name: investment
+    using:
+      foreign_key_constraint_on:
+        column: tp_transfer_id
+        table:
+          name: plaid_app_investment
+          schema: public
+  - name: treasuryprime_counterpartylink
+    using:
+      foreign_key_constraint_on: counterparty_id
+

@@ -1,15 +1,38 @@
 import uuid
-from typing import Any
 
-import redis.lock
-from django.apps import apps
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from plaid.model.transfer_authorization import TransferAuthorization
 
 from core_utils.models import BaseModel
-from plaid_app.utils import authorize_and_create_investment
+from core_utils.utils import AttrForeignKey
 from users.models.user import User
+
+STATUS_PENDING = 'pending'
+STATUS_TRS_REJECTED = 'transfer_rejected'
+STATUS_TRS_IN_PROGRESS = 'transfer_in_progress'
+STATUS_TRS_COMPLETE = 'transfer_complete'
+STATUS_TRS_FAILED = 'transfer_failed'
+STATUS_TRS_RETURNED = 'transfer_returned'
+STATUS_TRS_CANCELED = 'transfer_canceled'
+STATUS_CHOICES = (
+    (STATUS_PENDING, STATUS_PENDING),
+    (STATUS_TRS_REJECTED, STATUS_TRS_REJECTED),
+    (STATUS_TRS_IN_PROGRESS, STATUS_TRS_IN_PROGRESS),
+    (STATUS_TRS_COMPLETE, STATUS_TRS_COMPLETE),
+    (STATUS_TRS_FAILED, STATUS_TRS_FAILED),
+    (STATUS_TRS_RETURNED, STATUS_TRS_RETURNED),
+    (STATUS_TRS_CANCELED, STATUS_TRS_CANCELED),
+)
+
+STATUS_FAILED_SET = {
+    STATUS_TRS_RETURNED,
+    STATUS_TRS_CANCELED,
+    STATUS_TRS_REJECTED,
+}
+
+PLAID_ITEM_STATUS_NORMAL = 'normal'
+PLAID_ITEM_STATUS_LOGIN_REQUIRED = 'login_required'
+PLAID_ITEM_STATUS_PENDING_EXPIRATION = 'pending_expiration'  # set via webhook
 
 
 class PlaidInternal(BaseModel):
@@ -19,17 +42,36 @@ class PlaidInternal(BaseModel):
     value_str = models.CharField(null=True)
 
 
-class PlaidLink(BaseModel):
-    user = models.OneToOneField(User, on_delete=models.PROTECT, null=False)
+class PlaidLinkStatus(models.Model):
+    # 'normal', 'login_required', 'pending_expiration'
+    name = models.TextField(primary_key=True)
+    description = models.TextField(null=True)
+
+
+class PlaidLinkBase(BaseModel):
+    class Meta:
+        abstract = True
+
     active = models.BooleanField(default=False)
     plaid_user_id = models.UUIDField(default=uuid.uuid4, null=False)
     permanent_token = models.TextField(null=True)
     item_id = models.TextField(null=True, unique=True)  # webhook iden
+    institution_meta_data = models.JSONField(null=False, encoder=DjangoJSONEncoder, default=dict)
+    account_meta_data = models.JSONField(null=False, encoder=DjangoJSONEncoder, default=dict)
+
+    item_status_fk = AttrForeignKey(PlaidLinkStatus,
+                                    id_attname='item_status',
+                                    on_delete=models.PROTECT, null=False, db_column='item_status',
+                                    default=PLAID_ITEM_STATUS_NORMAL)
+
+
+class PlaidLink(PlaidLinkBase):
+    user = models.OneToOneField(User, on_delete=models.PROTECT, null=False)
+
 
 
 class PlaidTransfer(BaseModel):
     id = models.CharField(primary_key=True, max_length=100)
-    active = models.BooleanField(default=True)
     amount = models.DecimalField(decimal_places=2, max_digits=20)
     authorization_body = models.JSONField(null=False, encoder=DjangoJSONEncoder)
     transfer_body = models.JSONField(null=False, encoder=DjangoJSONEncoder)
@@ -45,53 +87,3 @@ class PlaidTransferEvent(BaseModel):
     event_type = models.CharField(max_length=100, null=False)
     event_timestamp = models.DateTimeField(null=False)
 
-
-class Investment(BaseModel):
-    STATUS_PENDING = 'pending'
-    STATUS_TRS_REJECTED = 'transfer_rejected'
-    STATUS_TRS_IN_PROGRESS = 'transfer_in_progress'
-    STATUS_TRS_COMPLETE = 'transfer_complete'
-    STATUS_TRS_FAILED = 'transfer_failed'
-    STATUS_TRS_RETURNED = 'transfer_returned'
-    STATUS_TRS_CANCELED = 'transfer_canceled'
-    STATUS_CHOICES = (
-        (STATUS_PENDING, STATUS_PENDING),
-        (STATUS_TRS_REJECTED, STATUS_TRS_REJECTED),
-        (STATUS_TRS_IN_PROGRESS, STATUS_TRS_IN_PROGRESS),
-        (STATUS_TRS_COMPLETE, STATUS_TRS_COMPLETE),
-        (STATUS_TRS_FAILED, STATUS_TRS_FAILED),
-        (STATUS_TRS_RETURNED, STATUS_TRS_RETURNED),
-        (STATUS_TRS_CANCELED, STATUS_TRS_CANCELED),
-    )
-
-    # class Meta:
-        # constraints = [UniqueConstraint(fields=['user', 'deal'], condition=Q(active=True), name='investment_uniq')]
-
-    user = models.ForeignKey(User, on_delete=models.PROTECT, null=False)
-
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-
-    transaction_id = models.OneToOneField(PlaidTransfer, null=True, unique=True, on_delete=models.PROTECT)
-
-    invested_amount = models.DecimalField(null=False, max_digits=20, decimal_places=2)
-
-    def create_transfer(self, user_present, device_ip, device_ua) -> tuple[TransferAuthorization | None, Any]:
-
-        redis_client = apps.get_app_config('django_app').redis
-        lock = redis.lock.Lock(redis=redis_client, name='user_transaction_lock_%s' % self.user.auth0id,
-                               timeout=300, blocking_timeout=300)
-        with lock:
-            tracked_transfer, authorization, error = authorize_and_create_investment(
-                user=self.user,
-                amount=self.invested_amount,
-                user_present=user_present,
-                beacon_session_id=None,
-                device_ua=device_ua,
-                device_ip=device_ip,
-            )
-            if error and not tracked_transfer:
-                return authorization, error
-            self.transaction = tracked_transfer
-            self.status = self.STATUS_TRS_IN_PROGRESS
-            self.save()
-            return authorization, None

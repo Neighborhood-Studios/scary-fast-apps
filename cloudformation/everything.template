@@ -29,27 +29,30 @@ Parameters:
 
   a0DomainName:
     Type: String
-    Description: 'Domain name of Auth0 tenant. Something like dev-jnso8xn6b1daq18g.us.auth0.com'
+    Description: Domain name of a0 tenant. Something like dev-jnso8xn6b1daq18g.us.auth0.com
+    Default: ''
+  a0CustomDomainName:
+    Type: String
+    Description: Optional; Dedicated Domain name for FE auth on a0. Something like dev-jnso8xn6b1daq18g.us.auth0.com
     Default: ''
   a0ApiIdentifier:
     Type: String
-    Description: 'Auth0 API identifier of Frontend app, example: https://api-dev.sfaconstruction.net/'
+    Description: a0 API identifier of Frontend app, e.g. https://api-staging.sfaconstruction.net
     Default: ''
 
   APPCertificateARN:
-    Description: 'Arn of the main APP.<domain>, must be in east-1 region, example: arn:aws:acm:us-east-1:232267884965:certificate/a5e33ca5-ed0e-4e02-a932-3967293590e8'
+    Description: Arn of the main APP.<domain> SSL certificate, must be in east-1 region
     Type: String
     Default: ''
     AllowedPattern: "arn:aws:acm:us-east-1:.*"
-
   APICertificateARN:
-    Description: 'Arn of the main API.<domain>, must be in the deployment region, example: arn:aws:acm:us-west-1:232267884965:certificate/49c55b77-6742-46e5-9d6a-0bc79f27b930'
+    Description: 'Arn of the main API.<domain> SSL certificate, must be in the deployment region'
     Type: String
     Default: ''
     AllowedPattern: "arn:aws:acm:.*"
 
   DBEndpoint:
-    Description: 'The endpoint for PostgreSQL, example: devpostgres.cvde1gulz0vk.us-west-1.rds.amazonaws.com'
+    Description: 'The endpoint for PostgreSQL'
     Type: String
     Default: ''
 
@@ -69,7 +72,7 @@ Parameters:
     Default: 'sfa_dev_hasura'
 
   RedisHost:
-    Description: 'The hostname of the Redis database, example: stagingnew.xlvwpc.clustercfg.memorydb.us-west-1.amazonaws.com'
+    Description: 'The hostname of the Redis database'
     Type: String
     Default: ''
     AllowedPattern: "[^:]*"
@@ -80,7 +83,7 @@ Parameters:
     Default: '6379'
 
   HasuraDockerImage:
-    Description: 'Name and tag of the Hasura Docker Image, example for dev: hasura/graphql-engine:v2.24.1, example for staging: 232267884965.dkr.ecr.us-west-1.amazonaws.com/sfa/hasura-staging:latest'
+    Description: 'Name and tag of the Hasura Docker Image, example for dev: hasura/graphql-engine:v2.24.1, example for staging: 123.dkr.ecr.us-west-1.amazonaws.com/sfa/hasura-staging:latest'
     Type: String
     Default: 'hasura/graphql-engine:v2.24.1'
 
@@ -102,7 +105,7 @@ Parameters:
   HasuraAWSSecretName:
     Description: 'The NAME of a secret in AWS Secret manager containing Hasura related secrets'
     Type: String
-    Default: 'hasura-secret'
+    Default: 'sfa-hasura-secret'
 
   HasuraAWSSecretArn:
     Description: 'The ARN of a secret in AWS Secret manager containing Hasura related secrets, can be shared with Django secret'
@@ -115,6 +118,21 @@ Parameters:
     Type: String
     Default: 'arn:aws:secretsmanager:'
     AllowedPattern: 'arn:aws:secretsmanager:.*'
+
+  HasuraGraphqlEnableConsole:
+    Description: 'Enable the Hasura Console (served by the server on / and /console), disable on production'
+    Type: String
+    Default: 'true'
+
+  HasuraGraphqlDevMode:
+    Description: 'Sets dev mode for GraphQL requests, i.e. in case of errors, includes an internal key in the errors extensions of the response, disable on production/staging'
+    Type: String
+    Default: 'true'
+
+  HasuraGraphqlEnableAPIs:
+    Description: 'List of APIs to be enabled on a Hasura GraphQL Engine instance; use "graphql" on Prod'
+    Type: String
+    Default: 'metadata, graphql, pgdump, config'
 
   OneSignalAppId:
     Description: 'Optional; App ID for OneSignal integration'
@@ -129,45 +147,69 @@ Parameters:
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: VPC that has access to the postgres db
-    Default: 'vpc-0813c9d5475677cd8'
+    Default: 'vpc-xxx'
   VpcCIDR:
     Type: String
-    Description: "VPC's CIDR that was specified when VPC was created"
+    Description: "VPC's CIDR"
     Default: '10.20.0.0/16'
+
   VpcPublicSubnetA:
     Type: AWS::EC2::Subnet::Id
     Description: List of 2 public SubnetIds for the given VPC.
-    Default: 'subnet-00fd2a34adb9fbfeb'
+    Default: 'subnet-xxx'
   VpcPublicSubnetB:
     Type: AWS::EC2::Subnet::Id
     Description: 'B'
-    Default: 'subnet-0628998114fa9b80f'
+    Default: 'subnet-yyy'
+
   VpcPrivateSubnetA:
     Type: AWS::EC2::Subnet::Id
-    Description: 'FIRST **Private** Subnet Id for the given VPC.'
-    Default: 'subnet-0e1edb91d06782376'
+    Description: List of 2 private SubnetIds for the given VPC.
+    Default: 'subnet-aaa'
   VpcPrivateSubnetB:
     Type: AWS::EC2::Subnet::Id
-    Description: 'SECOND **Private** Subnet Id for the given VPC.'
-    Default: 'subnet-0f2e3ae9b28fa4da2'
+    Description: 'B'
+    Default: 'subnet-bbb'
+
   RDSSecurityGroupID:
     Type: AWS::EC2::SecurityGroup::Id
     Description: 'ID of RDS security group that will be modified to allow access on 5432 port'
-    Default: 'sg-078d62d647307abf4'
+    Default: 'sg-xxx'
   RedisSecurityGroupID:
     Type: AWS::EC2::SecurityGroup::Id
     Description: 'ID of Redis security group that will be modified to allow access on 6379 port'
-    Default: 'sg-07287fdd3d8e7aa62'
+    Default: 'sg-yyy'
 
   PlaidEnv:
     Type: String
-    Description: 'Optional if using Plaid; Plaid env, Sandbox,Development,Production'
+    Description: 'Plaid env, Sandbox,Development,Production'
     Default: 'Sandbox'
 
   TwilioVerifyServiceId:
     Type: String
     Description: 'Optional; TWILIO_VERIFY_SID value; Get this value from Twilio after creating a "verify service", used to verify phone numbers'
     Default: ''
+
+  TwilioFromNumber:
+    Type: String
+    Description: 'Optional; Phone Number used for direct outgoing SMS, not related to verification'
+    Default: ''
+
+  CometChatApiUrl:
+    Type: String
+    Description: 'COMET_CHAT_API_URL value'
+    Default: 'https://254877885795d07a.api-us.cometchat.io'
+
+  signWellAPIAppId:
+    Type: String
+    Description: 'Optional; SignWell API App ID. Signwell webhook key relates to App ID. If value is not specified use default WebHook key'
+    Default: ''
+
+  treasuryPrimeApiEndpoint:
+    Type: String
+    Description: 'Treasury Prime API URL; https://api.treasuryprime.com, https://api.sandbox.treasuryprime.com (SandBox)'
+    Default: ''
+
 
 Mappings:
   ALL:
@@ -272,20 +314,43 @@ Resources:
       SecurityGroupIngress:
         - IpProtocol: 'tcp'
           SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+          Description: LB access to hasura
           FromPort: 8080
           ToPort: 8080
         - IpProtocol: 'tcp'
           SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+          Description: LB access to hasura-storage
           FromPort: 8000
           ToPort: 8000
-        - IpProtocol: 'tcp'
-          CidrIp: !Ref VpcCIDR
-          Description: Allow access to Hasura from intranet
-          FromPort: 8080
-          ToPort: 8080
       Tags:
         - Key: 'Name'
           Value: !Sub '${APIName}-EC2-SecurityGroup'
+
+  EC2SecurityGroupHasuraStorageSGIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: EC2SecurityGroup
+    Properties:
+      GroupId:
+        Ref: EC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: '8000'
+      ToPort: '8000'
+      Description: Allow access to hasura-storage from self
+      SourceSecurityGroupId:
+        Ref: EC2SecurityGroup
+
+  EC2SecurityGroupHasuraSGIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: EC2SecurityGroup
+    Properties:
+      GroupId:
+        Ref: EC2SecurityGroup
+      IpProtocol: tcp
+      FromPort: '8080'
+      ToPort: '8080'
+      Description: Allow access to Hasura from self
+      SourceSecurityGroupId:
+        Ref: EC2SecurityGroup
 
   # A role needed by ECS
   ECSExecutionRole:
@@ -334,7 +399,7 @@ Resources:
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds  # not applicable to NLB
           Value: 360
-      Name: !Join [ '-', [ !Ref APIName, LoadBalancer ] ]
+      Name: !Join [ '-', [ !Ref APIName, ALB ] ]
       Scheme: internet-facing
       Type: application
       SecurityGroups:
@@ -412,15 +477,17 @@ Resources:
                   ],
                 ]
             - Name: 'HASURA_GRAPHQL_ENABLE_CONSOLE'
-              Value: 'true'
+              Value: !Ref HasuraGraphqlEnableConsole
             - Name: 'HASURA_GRAPHQL_ENABLE_TELEMETRY'
               Value: 'false'
             - Name: 'HASURA_GRAPHQL_ENABLED_LOG_TYPES'
               Value: 'startup, http-log, webhook-log, websocket-log, query-log'
             - Name: 'HASURA_GRAPHQL_DEV_MODE'
-              Value: 'true'
+              Value: !Ref HasuraGraphqlDevMode
             - Name: 'HASURA_GRAPHQL_UNAUTHORIZED_ROLE'
               Value: 'guest'
+            - Name: 'HASURA_GRAPHQL_ENABLED_APIS'
+              Value: !Ref HasuraGraphqlEnableAPIs
             - Name: 'HASURA_GRAPHQL_METADATA_DEFAULTS'
               Value: "{\"backend_configs\":{\"dataconnector\":{\"athena\":{\"uri\":\"http://data-connector-agent:8081/api/v1/athena\"},\"mariadb\":{\"uri\":\"http://data-connector-agent:8081/api/v1/mariadb\"},\"mysql8\":{\"uri\":\"http://data-connector-agent:8081/api/v1/mysql\"},\"oracle\":{\"uri\":\"http://data-connector-agent:8081/api/v1/oracle\"},\"snowflake\":{\"uri\":\"http://data-connector-agent:8081/api/v1/snowflake\"}}}}"
           Secrets:
@@ -450,8 +517,8 @@ Resources:
         MinimumHealthyPercent: 100
         MaximumPercent: 200
         DeploymentCircuitBreaker:
-          Enable: true
-          Rollback: true
+          Enable: false
+          Rollback: false
       DesiredCount: 1
       # This may need to be adjusted if the container takes a while to start up
       HealthCheckGracePeriodSeconds: 120
@@ -487,7 +554,7 @@ Resources:
       Name: !Join [ '-', [ !Ref APIName, tg ] ]
       Protocol: HTTP
       Port: !FindInMap [ ALL,  Ports,  HasuraContainerPort ]
-      HealthCheckIntervalSeconds: 10
+      HealthCheckIntervalSeconds: 30
       # will look for a 200 status code by default unless specified otherwise
       HealthCheckProtocol: HTTP
       HealthCheckPath: !Ref HasuraHealthCheckPath
@@ -582,9 +649,9 @@ Resources:
             - ContainerPort: !FindInMap [ ALL,  Ports,  DjangoContainerPort ]
               Name: djangoapp
               AppProtocol: http
-
-          # Send logs to CloudWatch Logs
           Environment:
+            - Name: 'ENVIRONMENT'
+              Value: !Ref Environment
             - Name: 'DATA_DB_NAME'
               Value: !Ref DBName
             - Name: 'DATA_DB_USER'
@@ -592,7 +659,7 @@ Resources:
             - Name: 'DATA_DB_HOST'
               Value: !Ref DBEndpoint
             - Name: 'DATA_DB_PORT'
-              Value: 5432
+              Value: '5432'
             - Name: 'DATA_DB_CONN_MAX_AGE'
               Value: "0"
             - Name: 'DRAMATIQ_REDIS_HOST'
@@ -603,6 +670,8 @@ Resources:
               Value: !Ref APIName
             - Name: 'AUTH0_DOMAIN'
               Value: !Ref a0DomainName
+            - Name: 'AUTH0_CUSTOM_DOMAIN'
+              Value: !Ref a0CustomDomainName
             - Name: 'AUTH0_API_IDENTIFIER'
               Value: !Ref a0ApiIdentifier
             - Name: 'API_DOMAIN_NAME'
@@ -619,6 +688,14 @@ Resources:
               Value: !Ref TwilioVerifyServiceId
             - Name: 'SENTRY_ENV'
               Value: !Ref Environment
+            - Name: 'TWILIO_FROM_NUMBER'
+              Value: !Ref TwilioFromNumber
+            - Name: 'COMET_CHAT_API_URL'
+              Value: !Ref CometChatApiUrl
+            - Name: 'SIGNWELL_API_APP_ID'
+              Value: !Ref signWellAPIAppId
+            - Name: 'TREASURY_PRIME_API_ENDPOINT'
+              Value: !Ref treasuryPrimeApiEndpoint
           Secrets:
             - Name: 'DATA_DB_PASSWORD'
               ValueFrom: !Sub '${DjangoAWSSecretArn}:DJANGO_DATA_DB_PASSWORD::'
@@ -636,6 +713,32 @@ Resources:
               ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_AUTH_TOKEN::'
             - Name: 'TWILIO_ACCOUNT_SID'
               ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_ACCOUNT_SID::'
+            - Name: 'SENDGRID_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SENDGRID_API_KEY::'
+            - Name: 'SENTRY_DSN'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SENTRY_DSN::'
+            - Name: 'DJANGO_SECRET_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:DJANGO_SECRET_KEY::'
+            - Name: 'COMET_CHAT_REST_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:COMET_CHAT_REST_KEY::'
+            - Name: 'STRIPE_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:STRIPE_API_KEY::'
+            - Name: 'STRIPE_PUBLISHABLE_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:STRIPE_PUBLISHABLE_KEY::'
+            - Name: 'SIGNWELL_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SIGNWELL_API_KEY::'
+            - Name: 'SIGNWELL_WEBHOOK_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SIGNWELL_WEBHOOK_KEY::'
+            - Name: 'TREASURY_PRIME_API_KEY_ID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_API_KEY_ID::'
+            - Name: 'TREASURY_PRIME_API_SECRET_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_API_SECRET_KEY::'
+            - Name: 'TREASURY_PRIME_WEBHOOK_USERNAME'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_WEBHOOK_USERNAME::'
+            - Name: 'TREASURY_PRIME_WEBHOOK_PASSWORD'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_WEBHOOK_PASSWORD::'
+            - Name: 'HASURA_GRAPHQL_ADMIN_SECRET'
+              ValueFrom: !Sub '${HasuraAWSSecretArn}:HASURA_GRAPHQL_ADMIN_SECRET::'
 
           LogConfiguration:
             LogDriver: awslogs
@@ -681,8 +784,9 @@ Resources:
             - "-c"
             - "python manage.py rundramatiq"
           WorkingDirectory: "/app"
-          # Send logs to CloudWatch Logs
           Environment:
+            - Name: 'ENVIRONMENT'
+              Value: !Ref Environment
             - Name: 'DATA_DB_NAME'
               Value: !Ref DBName
             - Name: 'DATA_DB_USER'
@@ -690,7 +794,7 @@ Resources:
             - Name: 'DATA_DB_HOST'
               Value: !Ref DBEndpoint
             - Name: 'DATA_DB_PORT'
-              Value: 5432
+              Value: '5432'
             - Name: 'DATA_DB_CONN_MAX_AGE'
               Value: "0"
             - Name: 'DRAMATIQ_REDIS_HOST'
@@ -701,6 +805,8 @@ Resources:
               Value: !Ref APIName
             - Name: 'AUTH0_DOMAIN'
               Value: !Ref a0DomainName
+            - Name: 'AUTH0_CUSTOM_DOMAIN'
+              Value: !Ref a0CustomDomainName
             - Name: 'AUTH0_API_IDENTIFIER'
               Value: !Ref a0ApiIdentifier
             - Name: 'API_DOMAIN_NAME'
@@ -717,6 +823,14 @@ Resources:
               Value: !Ref TwilioVerifyServiceId
             - Name: 'SENTRY_ENV'
               Value: !Ref Environment
+            - Name: 'TWILIO_FROM_NUMBER'
+              Value: !Ref TwilioFromNumber
+            - Name: 'COMET_CHAT_API_URL'
+              Value: !Ref CometChatApiUrl
+            - Name: 'SIGNWELL_API_APP_ID'
+              Value: !Ref signWellAPIAppId
+            - Name: 'TREASURY_PRIME_API_ENDPOINT'
+              Value: !Ref treasuryPrimeApiEndpoint
           Secrets:
             - Name: 'DATA_DB_PASSWORD'
               ValueFrom: !Sub '${DjangoAWSSecretArn}:DJANGO_DATA_DB_PASSWORD::'
@@ -734,7 +848,34 @@ Resources:
               ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_AUTH_TOKEN::'
             - Name: 'TWILIO_ACCOUNT_SID'
               ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_ACCOUNT_SID::'
+            - Name: 'SENDGRID_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SENDGRID_API_KEY::'
+            - Name: 'SENTRY_DSN'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SENTRY_DSN::'
+            - Name: 'DJANGO_SECRET_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:DJANGO_SECRET_KEY::'
+            - Name: 'COMET_CHAT_REST_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:COMET_CHAT_REST_KEY::'
+            - Name: 'STRIPE_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:STRIPE_API_KEY::'
+            - Name: 'STRIPE_PUBLISHABLE_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:STRIPE_PUBLISHABLE_KEY::'
+            - Name: 'SIGNWELL_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SIGNWELL_API_KEY::'
+            - Name: 'SIGNWELL_WEBHOOK_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SIGNWELL_WEBHOOK_KEY::'
+            - Name: 'TREASURY_PRIME_API_KEY_ID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_API_KEY_ID::'
+            - Name: 'TREASURY_PRIME_API_SECRET_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_API_SECRET_KEY::'
+            - Name: 'TREASURY_PRIME_WEBHOOK_USERNAME'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_WEBHOOK_USERNAME::'
+            - Name: 'TREASURY_PRIME_WEBHOOK_PASSWORD'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_WEBHOOK_PASSWORD::'
+            - Name: 'HASURA_GRAPHQL_ADMIN_SECRET'
+              ValueFrom: !Sub '${HasuraAWSSecretArn}:HASURA_GRAPHQL_ADMIN_SECRET::'
 
+          # Send logs to CloudWatch Logs
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -777,10 +918,11 @@ Resources:
           EntryPoint:
             - "sh"
             - "-c"
-            - "python manage.py crontab"
+            - "python manage.py crontab --no-heartbeat"
           WorkingDirectory: "/app"
-          # Send logs to CloudWatch Logs
           Environment:
+            - Name: 'ENVIRONMENT'
+              Value: !Ref Environment
             - Name: 'DATA_DB_NAME'
               Value: !Ref DBName
             - Name: 'DATA_DB_USER'
@@ -788,7 +930,7 @@ Resources:
             - Name: 'DATA_DB_HOST'
               Value: !Ref DBEndpoint
             - Name: 'DATA_DB_PORT'
-              Value: 5432
+              Value: '5432'
             - Name: 'DATA_DB_CONN_MAX_AGE'
               Value: "0"
             - Name: 'DRAMATIQ_REDIS_HOST'
@@ -799,6 +941,8 @@ Resources:
               Value: !Ref APIName
             - Name: 'AUTH0_DOMAIN'
               Value: !Ref a0DomainName
+            - Name: 'AUTH0_CUSTOM_DOMAIN'
+              Value: !Ref a0CustomDomainName
             - Name: 'AUTH0_API_IDENTIFIER'
               Value: !Ref a0ApiIdentifier
             - Name: 'API_DOMAIN_NAME'
@@ -815,6 +959,14 @@ Resources:
               Value: !Ref TwilioVerifyServiceId
             - Name: 'SENTRY_ENV'
               Value: !Ref Environment
+            - Name: 'TWILIO_FROM_NUMBER'
+              Value: !Ref TwilioFromNumber
+            - Name: 'COMET_CHAT_API_URL'
+              Value: !Ref CometChatApiUrl
+            - Name: 'SIGNWELL_API_APP_ID'
+              Value: !Ref signWellAPIAppId
+            - Name: 'TREASURY_PRIME_API_ENDPOINT'
+              Value: !Ref treasuryPrimeApiEndpoint
           Secrets:
             - Name: 'DATA_DB_PASSWORD'
               ValueFrom: !Sub '${DjangoAWSSecretArn}:DJANGO_DATA_DB_PASSWORD::'
@@ -832,7 +984,34 @@ Resources:
               ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_AUTH_TOKEN::'
             - Name: 'TWILIO_ACCOUNT_SID'
               ValueFrom: !Sub '${DjangoAWSSecretArn}:TWILIO_ACCOUNT_SID::'
+            - Name: 'SENDGRID_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SENDGRID_API_KEY::'
+            - Name: 'SENTRY_DSN'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SENTRY_DSN::'
+            - Name: 'DJANGO_SECRET_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:DJANGO_SECRET_KEY::'
+            - Name: 'COMET_CHAT_REST_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:COMET_CHAT_REST_KEY::'
+            - Name: 'STRIPE_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:STRIPE_API_KEY::'
+            - Name: 'STRIPE_PUBLISHABLE_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:STRIPE_PUBLISHABLE_KEY::'
+            - Name: 'SIGNWELL_API_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SIGNWELL_API_KEY::'
+            - Name: 'SIGNWELL_WEBHOOK_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:SIGNWELL_WEBHOOK_KEY::'
+            - Name: 'TREASURY_PRIME_API_KEY_ID'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_API_KEY_ID::'
+            - Name: 'TREASURY_PRIME_API_SECRET_KEY'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_API_SECRET_KEY::'
+            - Name: 'TREASURY_PRIME_WEBHOOK_USERNAME'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_WEBHOOK_USERNAME::'
+            - Name: 'TREASURY_PRIME_WEBHOOK_PASSWORD'
+              ValueFrom: !Sub '${DjangoAWSSecretArn}:TREASURY_PRIME_WEBHOOK_PASSWORD::'
+            - Name: 'HASURA_GRAPHQL_ADMIN_SECRET'
+              ValueFrom: !Sub '${HasuraAWSSecretArn}:HASURA_GRAPHQL_ADMIN_SECRET::'
 
+          # Send logs to CloudWatch Logs
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -846,7 +1025,7 @@ Resources:
       Name: !Join [ '-', [ !Ref APIName, djtg ] ]
       Port: !FindInMap [ ALL,  Ports,  DjangoContainerPort ]
       Protocol: HTTP
-      HealthCheckIntervalSeconds: 10
+      HealthCheckIntervalSeconds: 30
       # will look for a 200 status code by default unless specified otherwise
       HealthCheckProtocol: HTTP
       HealthCheckPath: "/healthz"
@@ -891,8 +1070,8 @@ Resources:
         MaximumPercent: 200
         MinimumHealthyPercent: 100
         DeploymentCircuitBreaker:
-          Enable: true
-          Rollback: true
+          Enable: false
+          Rollback: false
       DeploymentController:
         Type: ECS
       EnableECSManagedTags: true
@@ -929,8 +1108,8 @@ Resources:
         MaximumPercent: 200
         MinimumHealthyPercent: 100
         DeploymentCircuitBreaker:
-          Enable: true
-          Rollback: true
+          Enable: false
+          Rollback: false
       DeploymentController:
         Type: ECS
       EnableECSManagedTags: true
@@ -964,8 +1143,8 @@ Resources:
         MaximumPercent: 100
         MinimumHealthyPercent: 0
         DeploymentCircuitBreaker:
-          Enable: true
-          Rollback: true
+          Enable: false
+          Rollback: false
       DeploymentController:
         Type: ECS
       EnableECSManagedTags: true
@@ -1100,6 +1279,7 @@ Resources:
             - OPTIONS
           TargetOriginId: !Sub "${APIName}S3Origin"
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # CachingOptimized
+          Compress: true
           OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf # CORS-S3Origin
           ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03 # SecurityHeadersPolicy
           ViewerProtocolPolicy: redirect-to-https
@@ -1323,8 +1503,8 @@ Resources:
         MaximumPercent: 200
         MinimumHealthyPercent: 100
         DeploymentCircuitBreaker:
-          Enable: true
-          Rollback: true
+          Enable: false
+          Rollback: false
       DeploymentController:
         Type: ECS
       EnableECSManagedTags: true

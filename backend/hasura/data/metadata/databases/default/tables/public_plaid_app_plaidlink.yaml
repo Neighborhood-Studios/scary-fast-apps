@@ -1,0 +1,32 @@
+table:
+  name: plaid_app_plaidlink
+  schema: public
+select_permissions:
+  - role: manager
+    permission:
+      columns:
+        - account_meta_data
+        - created_at
+        - id
+        - institution_meta_data
+        - item_id
+        - permanent_token
+        - updated_at
+        - user_id
+      filter:
+        _and:
+          - active:
+              _eq: true
+          - _exists:
+              _table:
+                name: users_employee
+                schema: public
+              _where:
+                _and:
+                  - user_id:
+                      _eq: X-Hasura-User-Id
+                  - active:
+                      _eq: true
+      query_root_fields: []
+      subscription_root_fields: []
+    comment: ""

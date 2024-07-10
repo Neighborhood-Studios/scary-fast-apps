@@ -1,113 +1,593 @@
 rules: []
 rulesConfigs: []
-hooks: []
 pages: []
 resourceServers:
-  - name: SFA Hasura dev
-    identifier: https://api-dev.sfaconstruction.net/v1/graphql
-    allow_offline_access: false
+  - name: Main API
+    identifier: '##MAIN_API_AUDIENCE##'
+    allow_offline_access: true
+    enforce_policies: false
     signing_alg: RS256
     skip_consent_for_verifiable_first_party_clients: true
+    token_dialect: access_token
     token_lifetime: 86400
     token_lifetime_for_web: 7200
-  - name: SFA Hasura staging
-    identifier: https://api-staging.sfaconstruction.net
-    allow_offline_access: false
-    signing_alg: RS256
-    skip_consent_for_verifiable_first_party_clients: true
-    token_lifetime: 86400
-    token_lifetime_for_web: 7200
-
+clients:
+  - name: Default App
+    callbacks: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - authorization_code
+      - implicit
+      - refresh_token
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 2592000
+      idle_token_lifetime: 1296000
+      rotation_type: non-rotating
+    sso_disabled: false
+  - name: Deployment Client App
+    allowed_clients: []
+    app_type: non_interactive
+    callbacks: []
+    client_aliases: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    description: 'App for deployment: import/export Auth0 configuration'
+    grant_types:
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 31557600
+      idle_token_lifetime: 2592000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: client_secret_post
+  - name: Management API Service
+    allowed_clients: []
+    app_type: non_interactive
+    callbacks: []
+    client_aliases: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    description: Management API for Django and Actions scrips
+    grant_types:
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 31557600
+      idle_token_lifetime: 2592000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: client_secret_post
+  - name: ##FRIENDLY_NAME##
+    allowed_clients: []
+    allowed_logout_urls: '@@ALLOWED_ORIGINS@@'
+    allowed_origins: '@@ALLOWED_ORIGINS@@'
+    app_type: spa
+    callbacks: '@@ALLOWED_ORIGINS@@'
+    client_aliases: []
+    cross_origin_auth: false
+    cross_origin_loc: '##FE_INSTANCE##'
+    custom_login_page_on: true
+    description: ##FRIENDLY_NAME## front-end react application
+    grant_types:
+      - authorization_code
+      - implicit
+      - refresh_token
+    initiate_login_uri: '##FE_INSTANCE##'
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    logo_uri: '##FE_INSTANCE##/logo.png'
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    organization_require_behavior: no_prompt
+    refresh_token:
+      expiration_type: expiring
+      leeway: 0
+      token_lifetime: 2592000
+      idle_token_lifetime: 1296000
+      infinite_token_lifetime: false
+      infinite_idle_token_lifetime: false
+      rotation_type: rotating
+    sso_disabled: false
+    token_endpoint_auth_method: none
+    web_origins: '@@ALLOWED_ORIGINS@@'
+  - name: ##FRIENDLY_NAME## Admin
+    allowed_clients: []
+    allowed_logout_urls: '@@ALLOWED_ORIGINS_ADMIN_APP@@'
+    app_type: spa
+    callbacks: '@@ALLOWED_ORIGINS_ADMIN_APP@@'
+    client_aliases: []
+    cross_origin_auth: false
+    cross_origin_authentication: false
+    custom_login_page_on: true
+    description: |-
+      ##FRIENDLY_NAME## Admin front-end react application.
+      Login via google only.
+    grant_types:
+      - authorization_code
+      - implicit
+      - refresh_token
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    logo_uri: '##FE_INSTANCE##/logo.png'
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: expiring
+      leeway: 0
+      token_lifetime: 2592000
+      idle_token_lifetime: 1296000
+      infinite_token_lifetime: false
+      infinite_idle_token_lifetime: false
+      rotation_type: rotating
+    sso_disabled: false
+    token_endpoint_auth_method: none
+    web_origins: '@@ALLOWED_ORIGINS_ADMIN_APP@@'
+databases:
+  - name: Username-Password-Authentication
+    strategy: auth0
+    enabled_clients:
+      - Default App
+      - '##FRIENDLY_NAME##'
+    is_domain_connection: false
+    options:
+      mfa:
+        active: true
+        return_enroll_settings: true
+      passwordPolicy: good
+      passkey_options:
+        challenge_ui: both
+        local_enrollment_enabled: true
+        progressive_enrollment_enabled: true
+      strategy_version: 2
+      authentication_methods:
+        passkey:
+          enabled: false
+        password:
+          enabled: true
+      brute_force_protection: true
+    realms:
+      - Username-Password-Authentication
+connections:
+  - name: google-oauth2
+    strategy: google-oauth2
+    enabled_clients:
+      - Default App
+      - ##FRIENDLY_NAME## Admin
+    is_domain_connection: false
+    options:
+      email: true
+      scope:
+        - email
+        - profile
+      profile: true
 tenant:
+  allowed_logout_urls: '@@ALLOWED_ORIGINS@@'
+  default_audience: '##MAIN_API_AUDIENCE##'
+  default_directory: Username-Password-Authentication
+  default_redirection_uri: '##FE_INSTANCE##'
   enabled_locales:
     - en
   flags:
     revoke_refresh_token_grant: false
     disable_clickjack_protection_headers: false
-  friendly_name: SFA DEV (and staging?)
-  picture_url: https://uploads-ssl.webflow.com/64108130b4101ef3118a480e/6410ad53e514b7f64f74a138_4%202.png
+  friendly_name: '##FRIENDLY_NAME##'
+  oidc_logout:
+    rp_logout_end_session_endpoint_discovery: true
+  picture_url: '##LOGO_URL_APP##'
   sandbox_version: '18'
-  support_email: ''
-  support_url: ''
+  sessions:
+    oidc_logout_prompt_enabled: false
+  support_email: '##SUPPORT_EMAIL##'
+  support_url: ##SUPPORT_URL##
   universal_login:
     colors:
       page_background: '#E3E8DB'
       primary: '#002B2B'
-
-emailProvider: {}
 emailTemplates:
   - template: verify_email
     body: ./emailTemplates/verify_email.html
-    enabled: true
+    enabled: false
     from: ''
-    resultUrl: '{{ application.callback_domain }}'
     subject: ''
     syntax: liquid
     urlLifetimeInSeconds: 432000
-
+clientGrants:
+  - client_id: Management API Service
+    audience: '##MANAGEMENT_API_AUDIENCE##'
+    scope:
+      - read:client_grants
+      - create:client_grants
+      - delete:client_grants
+      - update:client_grants
+      - read:users
+      - update:users
+      - delete:users
+      - create:users
+      - read:users_app_metadata
+      - update:users_app_metadata
+      - delete:users_app_metadata
+      - create:users_app_metadata
+      - read:user_custom_blocks
+      - create:user_custom_blocks
+      - delete:user_custom_blocks
+      - create:user_tickets
+      - read:clients
+      - update:clients
+      - delete:clients
+      - create:clients
+      - read:client_keys
+      - update:client_keys
+      - delete:client_keys
+      - create:client_keys
+      - read:connections
+      - update:connections
+      - delete:connections
+      - create:connections
+      - read:resource_servers
+      - update:resource_servers
+      - delete:resource_servers
+      - create:resource_servers
+      - read:device_credentials
+      - update:device_credentials
+      - delete:device_credentials
+      - create:device_credentials
+      - read:rules
+      - update:rules
+      - delete:rules
+      - create:rules
+      - read:rules_configs
+      - update:rules_configs
+      - delete:rules_configs
+      - read:hooks
+      - update:hooks
+      - delete:hooks
+      - create:hooks
+      - read:actions
+      - update:actions
+      - delete:actions
+      - create:actions
+      - read:email_provider
+      - update:email_provider
+      - delete:email_provider
+      - create:email_provider
+      - blacklist:tokens
+      - read:stats
+      - read:insights
+      - read:tenant_settings
+      - update:tenant_settings
+      - read:logs
+      - read:logs_users
+      - read:shields
+      - create:shields
+      - update:shields
+      - delete:shields
+      - read:anomaly_blocks
+      - delete:anomaly_blocks
+      - update:triggers
+      - read:triggers
+      - read:grants
+      - delete:grants
+      - read:guardian_factors
+      - update:guardian_factors
+      - read:guardian_enrollments
+      - delete:guardian_enrollments
+      - create:guardian_enrollment_tickets
+      - read:user_idp_tokens
+      - create:passwords_checking_job
+      - delete:passwords_checking_job
+      - read:custom_domains
+      - delete:custom_domains
+      - create:custom_domains
+      - update:custom_domains
+      - read:email_templates
+      - create:email_templates
+      - update:email_templates
+      - read:mfa_policies
+      - update:mfa_policies
+      - read:roles
+      - create:roles
+      - delete:roles
+      - update:roles
+      - read:prompts
+      - update:prompts
+      - read:branding
+      - update:branding
+      - delete:branding
+      - read:log_streams
+      - create:log_streams
+      - delete:log_streams
+      - update:log_streams
+      - create:signing_keys
+      - read:signing_keys
+      - update:signing_keys
+      - read:limits
+      - update:limits
+      - create:role_members
+      - read:role_members
+      - delete:role_members
+      - read:entitlements
+      - read:attack_protection
+      - update:attack_protection
+      - read:organizations_summary
+      - create:authentication_methods
+      - read:authentication_methods
+      - update:authentication_methods
+      - delete:authentication_methods
+      - read:organizations
+      - update:organizations
+      - create:organizations
+      - delete:organizations
+      - create:organization_members
+      - read:organization_members
+      - delete:organization_members
+      - create:organization_connections
+      - read:organization_connections
+      - update:organization_connections
+      - delete:organization_connections
+      - create:organization_member_roles
+      - read:organization_member_roles
+      - delete:organization_member_roles
+      - create:organization_invitations
+      - read:organization_invitations
+      - delete:organization_invitations
+      - read:scim_config
+      - create:scim_config
+      - update:scim_config
+      - delete:scim_config
+      - create:scim_token
+      - read:scim_token
+      - delete:scim_token
+      - delete:phone_providers
+      - create:phone_providers
+      - read:phone_providers
+      - update:phone_providers
+      - delete:phone_templates
+      - create:phone_templates
+      - read:phone_templates
+      - update:phone_templates
+      - create:encryption_keys
+      - read:encryption_keys
+      - update:encryption_keys
+      - delete:encryption_keys
+      - read:sessions
+      - delete:sessions
+      - read:refresh_tokens
+      - delete:refresh_tokens
+      - create:self_service_profiles
+      - read:self_service_profiles
+      - update:self_service_profiles
+      - delete:self_service_profiles
+      - create:sso_access_tickets
+      - read:client_credentials
+      - create:client_credentials
+      - update:client_credentials
+      - delete:client_credentials
+guardianFactors:
+  - name: duo
+    enabled: false
+  - name: email
+    enabled: false
+  - name: otp
+    enabled: false
+  - name: push-notification
+    enabled: false
+  - name: recovery-code
+    enabled: false
+  - name: sms
+    enabled: false
+  - name: webauthn-platform
+    enabled: false
+  - name: webauthn-roaming
+    enabled: false
+guardianFactorProviders: []
+guardianFactorTemplates: []
+guardianPolicies:
+  policies: []
+guardianPhoneFactorSelectedProvider:
+  provider: auth0
+guardianPhoneFactorMessageTypes:
+  message_types: []
+roles:
+  - name: admin
+    description: >-
+      This user will have God access. They should be able to do everything and
+      anything
+    permissions: []
+  - name: devops
+    description: >-
+      Developers role. Almost the same as the manager, but may have a bit more
+      power
+    permissions: []
+  - name: manager
+    description: >-
+      They should be able to do most things, read/write/edit everything, but
+      they can't change anything that's relevant to developers
+    permissions: []
+  - name: user
+    description: Normal use
+    permissions: []
+branding:
+  colors:
+    page_background: '#E3E8DB'
+    primary: '#967BB6'
+  logo_url: '##LOGO_URL_APP##'
+  templates: []
+prompts:
+  customText:
+    en:
+      login:
+        login:
+          alertListTitle: Alerts
+          auth0-users-validation: Something went wrong, please try again later
+          authentication-failure: We are sorry, something went wrong when attempting to login
+          buttonText: Continue
+          custom-script-error-code: Something went wrong, please try again later.
+          description: Log in to ${companyName} to continue to ${clientName}.
+          editEmailText: Edit
+          emailPlaceholder: Email address
+          federatedConnectionButtonText: Continue with ${connectionName}
+          footerLinkText: Sign up
+          footerText: Don't have an account?
+          forgotPasswordText: Forgot password?
+          hidePasswordText: Hide password
+          invalid-connection: Invalid connection
+          invalid-email-format: Email is not valid.
+          invitationDescription: >-
+            Log in to accept ${inviterName}'s invitation to join ${companyName}
+            on ${clientName}.
+          invitationTitle: You've Been Invited!
+          ip-blocked: >-
+            We have detected suspicious login behavior and further attempts will
+            be blocked. Please contact the administrator.
+          logoAltText: ${companyName}
+          no-db-connection: Invalid connection
+          no-email: Please enter an email address
+          no-password: Password is required
+          no-username: Username is required
+          pageTitle: Log in | ${clientName}
+          password-breached: >-
+            We have detected a potential security issue with this account. To
+            protect your account, we have prevented this login. Please reset
+            your password to proceed.
+          passwordPlaceholder: Password
+          same-user-login: >-
+            Too many login attempts for this user. Please wait, and try again
+            later.
+          separatorText: Or
+          showPasswordText: Show password
+          signupActionLinkText: ${footerLinkText}
+          signupActionText: ${footerText}
+          title: Welcome
+          user-blocked: >-
+            Your account has been blocked after multiple consecutive login
+            attempts.
+          usernamePlaceholder: Username or email address
+          wrong-credentials: Wrong username or password
+          wrong-email-credentials: Wrong email or password
+  identifier_first: true
+  universal_login_experience: new
+  webauthn_platform_first_factor: false
 migrations: {}
 actions:
-  - name: Handle google auth
-    code: ./actions/Handle google auth/code.js
+  - name: User login
+    code: ./actions/User login/code.js
     dependencies:
+      - name: axios
+        version: 1.5.1
+      - name: '@sentry/node'
+        version: 7.74.1
       - name: auth0
         version: 4.0.1
     deployed: true
     runtime: node18-actions
     secrets:
-      - name: managemtAPI_APP_clientID
-      - name: managemtAPI_APP_secret
-      - name: managemtAPI_APP_domain
-    status: built
-    supported_triggers:
-      - id: post-login
-        version: v3
-  - name: custom claims
-    code: ./actions/custom claims/code.js
-    dependencies: []
-    deployed: true
-    runtime: node18-actions
-    secrets: []
-    status: built
-    supported_triggers:
-      - id: post-login
-        version: v3
-  - name: hasura sync users
-    code: ./actions/hasura sync users/code.js
-    dependencies:
-      - name: axios
-        version: 1.4.0
-    deployed: true
-    runtime: node18-actions
-    secrets:
-      - name: dev_gql_endpoint
-      - name: dev_client_Id
-      - name: dev_gql_admin_secret
-      - name: staging_client_Id
-      - name: staging_gql_admin_secret
-      - name: staging_gql_endpoint
-      - name: dev_admin_app_client_id
-    status: built
-    supported_triggers:
-      - id: post-login
-        version: v3
-  - name: hasura-jwt-claims
-    code: ./actions/hasura-jwt-claims/code.js
-    dependencies: []
-    deployed: true
-    runtime: node18-actions
-    secrets: []
+      - name: APP_CLIENT_ID
+      - name: ADMIN_APP_CLIENT_ID
+      - name: GQL_ENDPOINT
+      - name: GQL_ADMIN_KEY
+      - name: MANAGEMENT_APP_DOMAIN
+      - name: MANAGEMENT_APP_CLIENT_ID
+      - name: MANAGEMENT_APP_SECRET
+      - name: SENTRY_ENVIRONMENT
+      - name: SENTRY_DSN
     status: built
     supported_triggers:
       - id: post-login
         version: v3
 triggers:
   post-login:
-    - action_name: Handle google auth
-      display_name: Handle google auth
-    - action_name: custom claims
-      display_name: custom claims
-    - action_name: hasura-jwt-claims
-      display_name: hasura-jwt-claims
-    - action_name: hasura sync users
-      display_name: hasura sync users
+    - action_name: User login
+      display_name: User login
+organizations: []
+attackProtection:
+  breachedPasswordDetection:
+    enabled: false
+    shields: []
+    admin_notification_frequency: []
+    method: standard
+    stage:
+      pre-user-registration:
+        shields: []
+  bruteForceProtection:
+    enabled: true
+    shields:
+      - block
+      - user_notification
+    mode: count_per_identifier_and_ip
+    allowlist: []
+    max_attempts: 10
+  suspiciousIpThrottling:
+    enabled: true
+    shields:
+      - admin_notification
+      - block
+    allowlist: []
+    stage:
+      pre-login:
+        max_attempts: 100
+        rate: 864000
+      pre-user-registration:
+        max_attempts: 50
+        rate: 1200
+logStreams: []
+themes: []

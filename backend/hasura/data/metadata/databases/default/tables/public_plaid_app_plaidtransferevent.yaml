@@ -1,0 +1,3 @@
+table:
+  name: plaid_app_plaidtransferevent
+  schema: public

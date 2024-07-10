@@ -10,4 +10,17 @@ select_permissions:
         - id
         - order
         - role_name
-      filter: {}
+      filter:
+        _and:
+          - active:
+              _eq: true
+          - _exists:
+              _table:
+                name: users_employee
+                schema: public
+              _where:
+                _and:
+                  - user_id:
+                      _eq: X-Hasura-User-Id
+                  - active:
+                      _eq: true

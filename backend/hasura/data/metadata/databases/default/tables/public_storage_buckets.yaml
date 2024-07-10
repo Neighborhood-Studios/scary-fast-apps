@@ -49,6 +49,28 @@ array_relationships:
         remote_table:
           name: storage_files
           schema: public
+insert_permissions:
+  - role: manager
+    permission:
+      check:
+        _exists:
+          _table:
+            name: users_employee
+            schema: public
+          _where:
+            _and:
+              - user_id:
+                  _eq: X-Hasura-User-Id
+              - active:
+                  _eq: true
+      columns:
+        - cache_control
+        - download_expiration
+        - id
+        - max_upload_file_size
+        - min_upload_file_size
+        - presigned_urls_enabled
+    comment: ""
 select_permissions:
   - role: manager
     permission:
@@ -62,3 +84,40 @@ select_permissions:
         - created_at
         - updated_at
       filter: {}
+  - role: user
+    permission:
+      columns:
+        - created_at
+        - updated_at
+        - id
+        - download_expiration
+        - min_upload_file_size
+        - max_upload_file_size
+        - cache_control
+        - presigned_urls_enabled
+      filter: {}
+      query_root_fields: []
+      subscription_root_fields: []
+update_permissions:
+  - role: manager
+    permission:
+      columns:
+        - cache_control
+        - download_expiration
+        - id
+        - max_upload_file_size
+        - min_upload_file_size
+        - presigned_urls_enabled
+      filter:
+        _exists:
+          _table:
+            name: users_employee
+            schema: public
+          _where:
+            _and:
+              - user_id:
+                  _eq: X-Hasura-User-Id
+              - active:
+                  _eq: true
+      check: null
+    comment: ""

@@ -1,0 +1,43 @@
+table:
+  name: treasuryprime_app_counterpartylink
+  schema: public
+object_relationships:
+  - name: user
+    using:
+      foreign_key_constraint_on: user_id
+array_relationships:
+  - name: achtransfers
+    using:
+      foreign_key_constraint_on:
+        column: counterparty_id
+        table:
+          name: treasuryprime_app_achtransfer
+          schema: public
+select_permissions:
+  - role: manager
+    permission:
+      columns:
+        - ach
+        - active
+        - created_at
+        - id
+        - name_on_account
+        - updated_at
+        - user_id
+      filter:
+        _and:
+          - active:
+              _eq: true
+          - _exists:
+              _table:
+                name: users_employee
+                schema: public
+              _where:
+                _and:
+                  - user_id:
+                      _eq: X-Hasura-User-Id
+                  - active:
+                      _eq: true
+      query_root_fields: []
+      subscription_root_fields: []
+    comment: ""

@@ -19,7 +19,16 @@ from django.urls import path, include
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
-    path('', include('users.urls')),
-    path('', include('plaid_app.urls')),
-    path('', include('twilio_app.urls')),
+    path('da/api/v1/', include([
+        path('', include('users.urls')),
+        path('phone/', include('twilio_app.urls')),
+
+        path('email/', include('sendgrid_app.urls')),
+        path('chat/', include('comet_chat.urls')),
+        path('plaid/', include('plaid_app.urls')),
+        path('treasuryprime/', include('treasuryprime_app.urls')),
+        path('signwell/', include('signwell.urls')),
+        path('', include('stripe_app.urls')),
+        path('', include('expo_notifications.urls')),
+    ])),
 ]

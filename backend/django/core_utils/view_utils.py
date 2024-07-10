@@ -1,6 +1,6 @@
 from functools import wraps
-import jwt
 
+import jwt
 from django.http import JsonResponse
 
 

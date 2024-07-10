@@ -87,7 +87,7 @@ class ManagementAPI:
             self.get_new_token()
 
         def _make_req():
-            logger.info('ManagementAip: Making %s request to: %s with %s (%s)', method, url, params, json_data)
+            logger.info('ManagementAPI: Making %s request to: %s with %s (%s)', method, url, params, json_data)
             _resp = getattr(session, method)(
                 url,
                 params=params,

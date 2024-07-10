@@ -1,28 +1,25 @@
-import logging
-
 import json
+import logging
 from functools import wraps
+from typing import Any
 
 import jwt
 import requests
-
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.http import HttpRequest
+from jwt import PyJWKClient
 from jwt.algorithms import RSAAlgorithm
 
-from django.conf import settings
-
-from jwt import PyJWKClient
-from typing import Any
-
 from core_utils.middleware.json_exception import JsonException
+from users.models.user import User
 
 logger = logging.getLogger()
 
 
 def jwt_get_username_from_payload_handler(payload):
     logger.info('got auth payload %s', payload)
-    username = payload.get('sub').replace('|', '.')
+    username = payload.get('sub')
     authenticate(remote_user=username)
     return username
 
@@ -41,6 +38,27 @@ def jwt_decode_token(token):
     issuer = 'https://{}/'.format(settings.AUTH0_DOMAIN)
     return jwt.decode(token, public_key, audience=settings.AUTH0_API_IDENTIFIER, issuer=issuer,
                       algorithms=['RS256'])
+
+
+def get_user_id_from_token(token):
+    payload = jwt.decode(token, options={'verify_signature': False})
+    return payload.get('sub')
+
+
+def get_user_from_token(token):
+    auth0id = get_user_id_from_token(token)
+    user = User.objects.get(auth0id=auth0id)
+    return user
+
+
+def get_user_role_from_request(request):
+    x_role = request.META.get("HTTP_X_HASURA_ROLE")
+    hasura_jwt_payload = (jwt.decode(request.auth, options={'verify_signature': False})
+                          .get("https://hasura.io/jwt/claims", {}))
+    allowed_roles = hasura_jwt_payload.get('x-hasura-allowed-roles', ())
+    default_role = hasura_jwt_payload.get('x-hasura-default-role')
+    role = x_role or default_role
+    return role if role in allowed_roles else None
 
 
 class RequestToken(object):

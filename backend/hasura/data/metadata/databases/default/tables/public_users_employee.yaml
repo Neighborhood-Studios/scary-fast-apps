@@ -2,20 +2,52 @@ table:
   name: users_employee
   schema: public
 object_relationships:
+  - name: chatlink
+    using:
+      manual_configuration:
+        column_mapping:
+          user_id: user_id
+        insertion_order: null
+        remote_table:
+          name: comet_chat_userchatlink
+          schema: public
+  - name: created_by
+    using:
+      foreign_key_constraint_on: created_by_id
+  - name: employee_role
+    using:
+      manual_configuration:
+        column_mapping:
+          role: role_name
+        insertion_order: null
+        remote_table:
+          name: users_roleorder
+          schema: public
   - name: user
     using:
       foreign_key_constraint_on: user_id
+computed_fields:
+  - name: full_name
+    definition:
+      function:
+        name: users_employee_full_name
+        schema: public
 insert_permissions:
   - role: manager
     permission:
-      check: {}
-      set:
-        created_by_id: x-hasura-User-Id
+      check:
+        _exists:
+          _table:
+            name: users_employee
+            schema: public
+          _where:
+            _and:
+              - user_id:
+                  _eq: X-Hasura-User-Id
+              - active:
+                  _eq: true
       columns:
-        - email
-        - first_name
-        - last_name
-        - role
+        - id
 select_permissions:
   - role: manager
     permission:
@@ -30,10 +62,17 @@ select_permissions:
         - user_id
         - created_at
         - updated_at
-      filter: {}
-update_permissions:
-  - role: manager
-    permission:
-      columns: []
-      filter: {}
-      check: null
+      computed_fields:
+        - full_name
+      filter:
+        _exists:
+          _table:
+            name: users_employee
+            schema: public
+          _where:
+            _and:
+              - user_id:
+                  _eq: X-Hasura-User-Id
+              - active:
+                  _eq: true
+      allow_aggregations: true

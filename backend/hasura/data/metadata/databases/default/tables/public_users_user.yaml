@@ -1,14 +1,43 @@
 table:
   name: users_user
   schema: public
-array_relationships:
-  - name: users_user_storage_files
+object_relationships:
+  - name: chat_userchatlink
+    using:
+      foreign_key_constraint_on:
+        column: user_id
+        table:
+          name: comet_chat_userchatlink
+          schema: public
+  - name: stripelink
+    using:
+      foreign_key_constraint_on:
+        column: user_id
+        table:
+          name: stripe_app_userstripelink
+          schema: public
+  - name: user_employee
     using:
       manual_configuration:
         column_mapping:
-          auth0id: uploaded_by_user_id
+          auth0id: user_id
         insertion_order: null
         remote_table:
+          name: users_employee
+          schema: public
+array_relationships:
+  - name: created_employees
+    using:
+      foreign_key_constraint_on:
+        column: created_by_id
+        table:
+          name: users_employee
+          schema: public
+  - name: files
+    using:
+      foreign_key_constraint_on:
+        column: uploaded_by_user_id
+        table:
           name: storage_files
           schema: public
 select_permissions:
@@ -19,22 +48,43 @@ select_permissions:
         - auth0id
         - created_at
         - email
-        - email_verified
-        - first_name
-        - last_name
+        - last_seen
         - phone_number
         - phone_verified
-        - last_seen
         - updated_at
-      filter: {}
+      filter:
+        _exists:
+          _table:
+            name: users_user
+            schema: public
+          _where:
+            _and:
+              - auth0id:
+                  _eq: X-Hasura-User-Id
+              - active:
+                  _eq: true
       allow_aggregations: true
   - role: user
     permission:
       columns:
+        - active
         - auth0id
-        - first_name
-        - last_name
+        - created_at
+        - email
         - last_seen
+        - phone_number
+        - phone_verified
+        - updated_at
       filter:
         auth0id:
           _eq: X-Hasura-User-Id
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - email
+      filter:
+        auth0id:
+          _eq: X-Hasura-User-Id
+      check: null
+    comment: ""

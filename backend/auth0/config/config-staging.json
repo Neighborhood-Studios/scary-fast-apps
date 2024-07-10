@@ -1,10 +1,25 @@
 {
-  "AUTH0_DOMAIN": "",
-  "AUTH0_CLIENT_ID": "",
+  "AUTH0_DOMAIN": "staging-<PROJECT_NAME>.us.auth0.com",
+  "AUTH0_CLIENT_ID": "TBD",
+  "AUTH0_ALLOW_DELETE": false,
 
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
     "ENV": "staging",
-    "ALLOWED_ORIGINS_ADMIN_APP": ["https://app-staging.sfaconstruction.com/admin/"],
-    "ALLOWED_ORIGINS": ["https://app-staging.sfaconstruction.com/"]
+    "FRIENDLY_NAME": "<PROJECT_NAME> STAGING",
+    "SUPPORT_EMAIL": "support@<PROJECT_NAME>.com",
+    "SUPPORT_URL": "https://app-staging.<PROJECT_NAME>.com",
+    "MANAGEMENT_API_AUDIENCE": "https://staging-<PROJECT_NAME>.us.auth0.com/api/v2/",
+    "FE_INSTANCE": "https://app-staging.<PROJECT_NAME>.com",
+    "LOGO_URL_ADMIN": "https://app-staging.<PROJECT_NAME>.com/logo.png",
+    "LOGO_URL_APP": "https://app-staging.<PROJECT_NAME>.com/logo-app.png",
+    "MAIN_API_AUDIENCE": "https://api-staging.<PROJECT_NAME>.com",
+    "ALLOWED_ORIGINS_ADMIN_APP": [
+      "https://app-staging.<PROJECT_NAME>.com/admin",
+      "https://app-local.<PROJECT_NAME>.com/admin"
+    ],
+    "ALLOWED_ORIGINS": [
+      "https://app-staging.<PROJECT_NAME>.com",
+      "https://app-local.<PROJECT_NAME>.com"
+    ]
   }
 }

@@ -1,4 +1,36 @@
 UPDATE_TRIGGERS_SQL = '''
+DO
+$$
+    BEGIN
+        CREATE FUNCTION public.update_timestamps_func(
+        )
+            RETURNS trigger AS
+        $BODY$
+        BEGIN
+            IF TG_OP = 'INSERT'
+            THEN
+                IF NEW.created_at IS NULL
+                THEN
+                    NEW.created_at = current_timestamp;
+                END IF;
+            ELSE
+                IF OLD.updated_at IS NOT DISTINCT FROM NEW.updated_at
+                THEN
+                    NEW.updated_at = current_timestamp;
+                END IF;
+            END IF;
+            RETURN NEW;
+        END;
+        $BODY$
+            LANGUAGE plpgsql
+            VOLATILE;
+
+    EXCEPTION
+        WHEN DUPLICATE_FUNCTION THEN
+            NULL;
+    END;
+$$;
+
 
 -- generic update function that can be re-run to add triggers to all public tables
 DO LANGUAGE plpgsql
